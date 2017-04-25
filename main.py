@@ -11,5 +11,5 @@ if __name__ == "__main__":
     logger.info("Start")
     app = QtGui.QApplication(sys.argv)
     mainWindow = MainWindow()
-    mainWindow.show()
+    mainWindow.showMaximized()
     sys.exit(app.exec_())
