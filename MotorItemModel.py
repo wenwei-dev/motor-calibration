@@ -31,15 +31,16 @@ class MotorValueEditor(QtGui.QWidget):
 
     def setInitValue(self):
         index = self.model.createIndex(self.row, self.model.header.index('Init'))
-        self.model.setData(index, QtCore.QVariant(self.getValue()), QtCore.Qt.EditRole)
+        self.model.setData(index, self.getValue(), QtCore.Qt.EditRole)
 
     def setMaxValue(self):
         index = self.model.createIndex(self.row, self.model.header.index('Max'))
-        self.model.setData(index, QtCore.QVariant(self.getValue()), QtCore.Qt.EditRole)
+        self.model.setData(index, self.getValue(), QtCore.Qt.EditRole)
 
     def setMinValue(self):
         index = self.model.createIndex(self.row, self.model.header.index('Min'))
-        self.model.setData(index, QtCore.QVariant(self.getValue()), QtCore.Qt.EditRole)
+        value = self.getValue()
+        self.model.setData(index, self.getValue(), QtCore.Qt.EditRole)
 
 class MotorValueDelegate(QtGui.QItemDelegate):
 
@@ -52,6 +53,7 @@ class MotorValueDelegate(QtGui.QItemDelegate):
         return editor
 
     def setEditorData(self, editor, index):
+        motor = self.model.motors[index.row()]
         value = self.model.motors[index.row()]['init']
         editor.setValue(value)
 
@@ -65,12 +67,14 @@ class MotorValueDelegate(QtGui.QItemDelegate):
 
 class MotorItemModel(QtCore.QAbstractTableModel):
 
-    def __init__(self, motors):
+    def __init__(self):
         super(MotorItemModel, self).__init__()
-        self.motors = motors
-        self.original_motors = copy.deepcopy(motors)
-        self.fields = ['name', 'motor_id', 'init', 'min', 'max']
-        self.header = ['Name', 'MotorID', 'Init', 'Min', 'Max', 'Editor']
+        self.motors = []
+        self.fields = ['name', 'device', 'motor_id', 'init', 'min', 'max']
+        self.header = ['Name', 'Device', 'MotorID', 'Init', 'Min', 'Max', 'Editor']
+
+    def addMotor(self, motor):
+        self.motors.append(motor)
 
     def rowCount(self, parent):
         return len(self.motors)
@@ -87,18 +91,15 @@ class MotorItemModel(QtCore.QAbstractTableModel):
         col = index.column()
         if col >= len(self.fields):
             return
+        field = self.fields[col]
         if role == QtCore.Qt.DisplayRole or role == QtCore.Qt.EditRole:
             motor = self.motors[index.row()]
-            return '{}'.format(motor[self.fields[col]])
+            return motor.get(field, 'None')
         elif role == QtCore.Qt.BackgroundRole:
             motor = self.motors[index.row()]
-            original_motor = self.original_motors[index.row()]
-            field = self.fields[col]
-            if str(original_motor[field]) != str(motor[field]):
+            if motor.get('saved_{}'.format(field)) != motor.get(field):
                 bg = QtGui.QBrush(QtCore.Qt.yellow)
                 return bg
-        else:
-            pass
 
     def flags(self, index):
         if not index.isValid(): return
@@ -108,10 +109,12 @@ class MotorItemModel(QtCore.QAbstractTableModel):
         col = index.column()
         if col >= len(self.fields):
             return False
+        field = self.fields[col]
         if index.isValid() and role == QtCore.Qt.EditRole:
             motor = self.motors[index.row()]
-            if str(motor[self.fields[index.column()]]) != data.toString():
-                motor[self.fields[index.column()]] = data.toString()
+            if isinstance(data, QtCore.QVariant):
+                data = data.toPyObject()
+            motor[field] = data
             return True
         else:
             return False
