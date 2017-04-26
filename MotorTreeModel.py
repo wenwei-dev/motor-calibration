@@ -1,18 +1,24 @@
 from PyQt4 import QtCore
 from PyQt4 import QtGui
+import os
 
 class MotorTreeModel(QtGui.QStandardItemModel):
 
-    def __init__(self, motors):
+    def __init__(self):
         super(MotorTreeModel, self).__init__()
         self.root = self.invisibleRootItem()
         self.header = ['Motor', 'Device']
-        self.pololu = QtGui.QStandardItem('pololu')
+        self.devices = QtGui.QStandardItem('Devices')
+        self.devices.setEditable(False)
+        self.pololu = QtGui.QStandardItem('Pololu Motors')
         self.pololu.setEditable(False)
-        self.dynamixel = QtGui.QStandardItem('dynamixel')
+        self.dynamixel = QtGui.QStandardItem('Dynamixel Motors')
         self.dynamixel.setEditable(False)
+        self.root.appendRow(self.devices)
         self.root.appendRow(self.pololu)
         self.root.appendRow(self.dynamixel)
+
+    def addMotors(self, motors):
         for motor in motors:
             self.addMotor(motor)
 
@@ -25,6 +31,23 @@ class MotorTreeModel(QtGui.QStandardItemModel):
             self.pololu.appendRow(node)
         elif motor['hardware'] == 'dynamixel':
             self.dynamixel.appendRow(node)
+
+    def updateDevices(self, devices):
+        added_devices = []
+        for row in range(self.devices.rowCount()):
+            node = self.devices.child(row)
+            added_devices.append(node.data().toPyObject()[0])
+        if len(devices) == 0:
+            self.devices.removeRows(0, self.devices.rowCount())
+        for device in devices:
+            if device in added_devices:
+                continue
+            name = os.path.split(device)[-1]
+            node = QtGui.QStandardItem(name)
+            node.setEditable(False)
+            node.setData(QtCore.QVariant((device,)))
+            node.setToolTip(device)
+            self.devices.appendRow(node)
 
     def headerData(self, section, orientation, role):
         if role == QtCore.Qt.DisplayRole:

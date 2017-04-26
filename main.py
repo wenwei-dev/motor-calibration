@@ -1,7 +1,7 @@
 import logging
 from PyQt4 import QtGui
 
-from mainwindow import MainWindow
+from MainWindow import MainWindow
 
 logger = logging.getLogger(__name__)
 

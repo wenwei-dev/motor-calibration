@@ -7,11 +7,14 @@
     <x>0</x>
     <y>0</y>
     <width>600</width>
-    <height>31</height>
+    <height>36</height>
    </rect>
   </property>
   <property name="windowTitle">
    <string>Form</string>
+  </property>
+  <property name="toolTip">
+   <string>Enable Motor</string>
   </property>
   <layout class="QVBoxLayout" name="verticalLayout">
    <property name="spacing">
@@ -26,7 +29,26 @@
       <number>0</number>
      </property>
      <item>
-      <widget class="QSlider" name="motorValueSlider">
+      <widget class="QCheckBox" name="enableCheckBox">
+       <property name="whatsThis">
+        <string>Enable Motor</string>
+       </property>
+       <property name="text">
+        <string/>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <widget class="MotorValueSlider" name="motorValueSlider">
+       <property name="enabled">
+        <bool>false</bool>
+       </property>
+       <property name="toolTip">
+        <string>Slide it to change motor target position</string>
+       </property>
+       <property name="autoFillBackground">
+        <bool>true</bool>
+       </property>
        <property name="minimum">
         <number>800</number>
        </property>
@@ -37,12 +59,21 @@
         <enum>Qt::Horizontal</enum>
        </property>
        <property name="tickPosition">
-        <enum>QSlider::NoTicks</enum>
+        <enum>QSlider::TicksBelow</enum>
+       </property>
+       <property name="tickInterval">
+        <number>100</number>
        </property>
       </widget>
      </item>
      <item>
       <widget class="QSpinBox" name="motorValueSpinBox">
+       <property name="enabled">
+        <bool>false</bool>
+       </property>
+       <property name="toolTip">
+        <string>Motor target position</string>
+       </property>
        <property name="minimum">
         <number>800</number>
        </property>
@@ -56,6 +87,9 @@
      </item>
      <item>
       <widget class="QPushButton" name="setMinButton">
+       <property name="toolTip">
+        <string>Set the current position as mininum position</string>
+       </property>
        <property name="text">
         <string>Set Min</string>
        </property>
@@ -63,6 +97,9 @@
      </item>
      <item>
       <widget class="QPushButton" name="setInitButton">
+       <property name="toolTip">
+        <string>Set the current position as initial position</string>
+       </property>
        <property name="text">
         <string>Set Init</string>
        </property>
@@ -70,6 +107,9 @@
      </item>
      <item>
       <widget class="QPushButton" name="setMaxButton">
+       <property name="toolTip">
+        <string>Set the current position as maximum position</string>
+       </property>
        <property name="text">
         <string>Set Max</string>
        </property>
@@ -79,6 +119,13 @@
    </item>
   </layout>
  </widget>
+ <customwidgets>
+  <customwidget>
+   <class>MotorValueSlider</class>
+   <extends>QSlider</extends>
+   <header>motorvalueslider.h</header>
+  </customwidget>
+ </customwidgets>
  <resources/>
  <connections/>
 </ui>
