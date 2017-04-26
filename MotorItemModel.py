@@ -52,7 +52,7 @@ class MotorValueEditor(QtGui.QWidget):
                         logger.error("No such device {}".format(device))
                 if self.controller:
                     position = self.controller.getPosition(motor['motor_id'])
-                    self.ui.motorValueSlider.setMotorPosition(position)
+                    self.ui.motorValueSlider.setMotorPosition(position/4)
             time.sleep(0.5)
 
     def setValue(self, value):
@@ -112,6 +112,16 @@ class MotorItemModel(QtCore.QAbstractTableModel):
         self.motors = []
         self.fields = ['name', 'device', 'motor_id', 'init', 'min', 'max']
         self.header = ['Name', 'Device', 'MotorID', 'Init', 'Min', 'Max', 'Editor']
+        self.timer = QtCore.QTimer(self)
+        self.timer.setInterval(500)
+        self.timer.timeout.connect(self.refresh)
+        self.timer.start()
+
+    def refresh(self):
+        editor_index = self.header.index('Editor')
+        first = self.createIndex(0, editor_index)
+        last = self.createIndex(self.rowCount(QtCore.QModelIndex()), editor_index)
+        self.emit(QtCore.SIGNAL("dataChanged"), first, last)
 
     def addMotor(self, motor):
         self.motors.append(motor)

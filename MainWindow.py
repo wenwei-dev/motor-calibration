@@ -30,7 +30,6 @@ class MainWindow(QtGui.QMainWindow):
         self.device_monitor_job = threading.Thread(target=self.monitor_devices)
         self.device_monitor_job.daemon = True
         self.device_monitor_job.start()
-        self.load_motor_settings('/home/wenwei/motors_settings.yaml')
 
     def init_menu(self):
         self.treeMenu = QtGui.QMenu(self.ui.treeView)
