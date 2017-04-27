@@ -14,6 +14,8 @@ class MotorValueEditor(QtGui.QWidget):
         super(MotorValueEditor, self).__init__(parent)
         self.model = model
         self.row = row
+        self.motor = self.model.motors[self.row]
+
         self.ui = Ui_Form()
         self.ui.setupUi(self)
         self.ui.motorValueSpinBox.valueChanged.connect(self.spinValueChanged)
@@ -21,11 +23,17 @@ class MotorValueEditor(QtGui.QWidget):
         self.ui.setInitButton.clicked.connect(self.setInitValue)
         self.ui.setMaxButton.clicked.connect(self.setMaxValue)
         self.ui.setMinButton.clicked.connect(self.setMinValue)
-        self.controller = None
-        self.connect_job = threading.Thread(target=self.connect)
-        self.connect_job.daemon = True
-        self.device = None
+        self.polljob = threading.Thread(target=self.poll)
+        self.polljob.daemon = True
+        self.polljob.start()
         self.ui.enableCheckBox.toggled.connect(self.enableMotor)
+        self.app = QtGui.QApplication.instance()
+
+    def get_controller(self):
+        device = self.motor['device']
+        if device in self.app.motor_controllers:
+            controller = self.app.motor_controllers[device]
+            return controller
 
     def enableMotor(self, enable):
         self.ui.motorValueSlider.setEnabled(enable)
@@ -37,33 +45,23 @@ class MotorValueEditor(QtGui.QWidget):
     def spinValueChanged(self, value):
         self.setValue(value)
 
-    def connect(self):
+    def poll(self):
         while True:
-            motor = self.model.motors[self.row]
-            device = motor.get('device')
-            if device:
-                device = str(device)
-                if self.device != device:
-                    if os.path.exists(device):
-                        self.device = device
-                        if motor['hardware'] == 'pololu':
-                            self.controller = Maestro(self.device)
-                    else:
-                        logger.error("No such device {}".format(device))
-                if self.controller:
-                    position = self.controller.getPosition(motor['motor_id'])
-                    self.ui.motorValueSlider.setMotorPosition(position/4)
+            controller = self.get_controller()
+            if controller is not None:
+                position = controller.getPosition(self.motor['motor_id'])
+                self.ui.motorValueSlider.setMotorPosition(position)
             time.sleep(0.5)
 
     def setValue(self, value):
         self.ui.motorValueSpinBox.setValue(value)
         self.ui.motorValueSlider.setValue(value)
-        if self.ui.enableCheckBox.isChecked() and self.controller:
-            motor = self.model.motors[self.row]
-            motor_id = motor['motor_id']
-            self.controller.setAcceleration(motor_id, 0)
-            self.controller.setSpeed(motor['motor_id'], motor['speed'])
-            self.controller.setTarget(motor_id, value)
+        controller = self.get_controller()
+        if self.ui.enableCheckBox.isChecked() and controller is not None:
+            motor_id = self.motor['motor_id']
+            controller.setAcceleration(motor_id, 0)
+            controller.setSpeed(self.motor['motor_id'], self.motor['speed'])
+            controller.setTarget(motor_id, value)
 
     def getValue(self):
         return self.ui.motorValueSpinBox.value()
@@ -95,7 +93,6 @@ class MotorValueDelegate(QtGui.QItemDelegate):
         motor = self.model.motors[index.row()]
         value = self.model.motors[index.row()]['init']
         editor.setValue(value)
-        editor.connect_job.start()
 
     def setModelData(self, editor, model, index):
         print "setModelData"

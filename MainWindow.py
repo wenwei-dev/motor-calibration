@@ -21,7 +21,6 @@ class MainWindow(QtGui.QMainWindow):
         self.init_action()
         self.ui.actionExit.triggered.connect(self.close)
         self.ui.actionLoad_motor_settings.triggered.connect(self.load_motor_settings_dialog)
-        self.motors = []
         self.tree_model = MotorTreeModel()
         self.ui.treeView.setModel(self.tree_model)
         self.ui.treeView.selectionModel().selectionChanged.connect(self.selectMotor)
@@ -30,6 +29,10 @@ class MainWindow(QtGui.QMainWindow):
         self.device_monitor_job = threading.Thread(target=self.monitor_devices)
         self.device_monitor_job.daemon = True
         self.device_monitor_job.start()
+        self.app = QtGui.QApplication.instance()
+        self.app.motors = []
+        self.app.motor_controllers = {}
+        self.load_motor_settings('/home/wenwei/motors_settings.yaml')
 
     def init_menu(self):
         self.treeMenu = QtGui.QMenu(self.ui.treeView)
@@ -115,12 +118,12 @@ class MainWindow(QtGui.QMainWindow):
         logger.info("Load motor settings {}".format(filename))
         with open(filename) as f:
             motors = yaml.load(f)
-            self.motors = motors
-            for motor in self.motors:
+            for motor in motors:
                 motor['device'] = ''
                 saved_motor = {'saved_{}'.format(k): v for k, v in motor.items()}
                 motor.update(saved_motor)
-            self.tree_model.addMotors(self.motors)
+            self.app.motors.extend(motors)
+            self.tree_model.addMotors(motors)
             self.ui.treeView.expandAll()
 
     def monitor_devices(self):
