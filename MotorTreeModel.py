@@ -66,8 +66,9 @@ class MotorTreeModel(QtGui.QStandardItemModel):
                 self.devices.removeRow(row)
                 logger.info("Removed device {}".format(device))
                 if device in self.app.motor_controllers:
+                    self.app.motor_controllers[device].active = False
                     del self.app.motor_controllers[device]
-                    logger.info("Removed controller {}".format(device))
+                    logger.warn("Removed controller {}".format(device))
             else:
                 current_devices.append(device)
 

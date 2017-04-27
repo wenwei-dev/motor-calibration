@@ -7,7 +7,8 @@ logger = logging.getLogger(__name__)
 
 if __name__ == "__main__":
     import sys
-    logging.basicConfig(level=logging.INFO)
+    logging.basicConfig(level=logging.INFO,
+        format='[%(name)s][%(levelname)s] %(asctime)s: %(message)s')
     logger.info("Start")
     app = QtGui.QApplication(sys.argv)
     mainWindow = MainWindow()

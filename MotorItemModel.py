@@ -6,6 +6,7 @@ import threading
 import time
 import os
 import logging
+import traceback
 
 logger = logging.getLogger(__name__)
 
@@ -28,6 +29,7 @@ class MotorValueEditor(QtGui.QWidget):
         self.ui.motorValueDoubleSpinBox.setEnabled(False)
         self.ui.motorValueSlider.setEnabled(False)
 
+        self.active = True
         self.polljob = threading.Thread(target=self.poll)
         self.polljob.daemon = True
         self.polljob.start()
@@ -52,12 +54,16 @@ class MotorValueEditor(QtGui.QWidget):
         self.setMotorValue(value)
 
     def poll(self):
-        while True:
-            controller = self.get_controller()
-            if controller is not None:
-                position = controller.getPosition(self.motor['motor_id'])
-                self.ui.motorValueSlider.setMotorPosition(position)
-            time.sleep(0.1)
+        while self.active:
+            try:
+                controller = self.get_controller()
+                if controller is not None:
+                    position = controller.getPosition(self.motor['motor_id'])
+                    self.ui.motorValueSlider.setMotorPosition(position)
+                    logger.debug("Get motor {} position {}".format(self.motor['name'], position))
+                time.sleep(0.2)
+            except Exception as ex:
+                logger.error(traceback.format_exc())
 
     def setMotorValue(self, value):
         if self.ui.enableCheckBox.isChecked():
@@ -100,12 +106,13 @@ class MotorValueDelegate(QtGui.QItemDelegate):
         editor.ui.motorValueDoubleSpinBox.setValue(value)
 
     def setModelData(self, editor, model, index):
-        print "setModelData"
-        print editor.ui.getValue()
+        logger.info("Set Model Data")
 
     def updateEditorGeometry(self, editor, option, index):
         editor.setGeometry(option.rect)
 
+    def destroyEditor(self, editor, index):
+        editor.active = False
 
 class MotorItemModel(QtCore.QAbstractTableModel):
 
@@ -114,14 +121,15 @@ class MotorItemModel(QtCore.QAbstractTableModel):
         self.motors = []
         self.fields = ['name', 'device', 'motor_id', 'init', 'min', 'max']
         self.header = ['Name', 'Device', 'MotorID', 'Init', 'Min', 'Max', 'Editor']
+
         self.timer = QtCore.QTimer(self)
-        self.timer.setInterval(500)
+        self.timer.setInterval(1000)
         self.timer.timeout.connect(self.refresh)
-        self.timer.start()
+        #self.timer.start()
 
     def refresh(self):
         editor_index = self.header.index('Editor')
-        first = self.createIndex(0, editor_index)
+        first = self.createIndex(0, 0)
         last = self.createIndex(self.rowCount(QtCore.QModelIndex()), editor_index)
         self.emit(QtCore.SIGNAL("dataChanged"), first, last)
 
@@ -170,10 +178,3 @@ class MotorItemModel(QtCore.QAbstractTableModel):
             return True
         else:
             return False
-
-if __name__ == '__main__':
-    import sys
-    app = QtGui.QApplication(sys.argv)
-    editor = MotorValueEditor()
-    editor.show()
-    sys.exit(app.exec_())

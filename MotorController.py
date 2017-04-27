@@ -3,6 +3,7 @@ import threading
 import logging
 import time
 import os
+import traceback
 
 logger = logging.getLogger(__name__)
 
@@ -13,6 +14,7 @@ class ChannelInfo(object):
         self.speed = None
         self.acceleration = None
         self.target = None
+        self.valid = False
 
 class MotorController(object):
 
@@ -28,6 +30,8 @@ class MotorController(object):
         self.channels = {}
         for i in range(24):
             self.channels[i] = ChannelInfo(i)
+
+        self.active = True
         self.poll_job = threading.Thread(target=self.poll)
         self.poll_job.daemon = True
         self.poll_job.start()
@@ -36,21 +40,25 @@ class MotorController(object):
         if self.controller is None:
             try:
                 if self.hardware == 'pololu':
-                    self.controller = Maestro(self.device)
+                    self.controller = Maestro(self.device, readTimeout=0.2)
                     logger.info("Pololu controller {} is initialized".format(self.device))
             except Exception as ex:
                 self.controller = None
-                logger.error(ex)
+                logger.error(traceback.format_exc())
 
     def poll(self):
-        while True:
+        while self.active:
             self.init_device()
             if self.controller is not None:
                 for i in range(24):
                     try:
                         self.channels[i].position = self.controller.getPosition(i)/4.0
+                        self.channels[i].valid = True
+                    except IndexError:
+                        self.channels[i].valid = False
                     except Exception as ex:
-                        logger.error(ex)
+                        self.channels[i].valid = False
+                        logger.error(traceback.format_exc())
                     logger.debug('Device: {}, ID: {}, Position: {}'.format(
                         self.device, i, self.channels[i].position))
             time.sleep(0.1)
@@ -59,19 +67,19 @@ class MotorController(object):
         try:
             self.controller.setTarget(id, value)
         except Exception as ex:
-            logger.error(ex)
+            logger.error(traceback.format_exc())
 
     def setSpeed(self, id, value):
         try:
             self.controller.setSpeed(id, value)
         except Exception as ex:
-            logger.error(ex)
+            logger.error(traceback.format_exc())
 
     def setAcceleration(self, id, value):
         try:
             self.controller.setAcceleration(id, value)
         except Exception as ex:
-            logger.error(ex)
+            logger.error(traceback.format_exc())
 
     def getPosition(self, id):
         return self.channels[id].position

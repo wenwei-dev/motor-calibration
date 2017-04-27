@@ -98,10 +98,16 @@ class MainWindow(QtGui.QMainWindow):
         model = MotorItemModel()
         for motor in motors:
             model.addMotor(motor)
+
+        editor_index = model.header.index('Editor')
         delegate = MotorValueDelegate(model)
+        old_model = self.ui.tableView.model()
+        if old_model:
+            for row in range(old_model.rowCount(QtCore.QModelIndex())):
+                index = model.createIndex(row, editor_index)
+                self.ui.tableView.closePersistentEditor(index)
         self.ui.tableView.setModel(model)
         self.ui.tableView.verticalHeader().hide()
-        editor_index = model.header.index('Editor')
         self.ui.tableView.setItemDelegateForColumn(editor_index, delegate)
         self.ui.tableView.setColumnWidth(editor_index, 800)
         for row in range(model.rowCount(QtCore.QModelIndex())):
