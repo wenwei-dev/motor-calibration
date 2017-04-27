@@ -57,19 +57,19 @@ class MotorController(object):
 
     def setTarget(self, id, value):
         try:
-            self.controller.setTarget(id, int(value*4))
+            self.controller.setTarget(id, value)
         except Exception as ex:
             logger.error(ex)
 
     def setSpeed(self, id, value):
         try:
-            self.controller.setSpeed(id, int(value))
+            self.controller.setSpeed(id, value)
         except Exception as ex:
             logger.error(ex)
 
     def setAcceleration(self, id, value):
         try:
-            self.controller.setAcceleration(id, int(value))
+            self.controller.setAcceleration(id, value)
         except Exception as ex:
             logger.error(ex)
 

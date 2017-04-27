@@ -15,8 +15,7 @@ class MotorValueSlider(QtGui.QSlider):
         painter = QtGui.QPainter(self)
         painter.setPen(QtGui.QColor(255, 0, 0, 200))
         painter.setBrush(QtGui.QBrush(QtGui.QColor(0, 255, 0, 200)))
-        x = QtGui.QStyle.sliderPositionFromValue(self.minimum(), self.maximum(), self.motor_position, self.width())
+        x = QtGui.QStyle.sliderPositionFromValue(self.minimum(), self.maximum(), int(self.motor_position*4), self.width())
         y = self.height()/2.0
-        print x, y
         center = QtCore.QPointF(x, y)
         painter.drawEllipse(center, 5, 5)
