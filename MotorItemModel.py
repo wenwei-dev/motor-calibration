@@ -30,7 +30,7 @@ class MotorValueEditor(QtGui.QWidget):
         self.ui.enableCheckBox.toggled.connect(self.enableMotor)
 
     def get_controller(self):
-        device = self.motor['device']
+        device = str(self.motor['device'])
         if device in self.app.motor_controllers:
             controller = self.app.motor_controllers[device]
             return controller
@@ -51,7 +51,7 @@ class MotorValueEditor(QtGui.QWidget):
             if controller is not None:
                 position = controller.getPosition(self.motor['motor_id'])
                 self.ui.motorValueSlider.setMotorPosition(position)
-            time.sleep(0.5)
+            time.sleep(0.1)
 
     def setValue(self, value):
         self.ui.motorValueSpinBox.setValue(value)
@@ -60,7 +60,7 @@ class MotorValueEditor(QtGui.QWidget):
         if self.ui.enableCheckBox.isChecked() and controller is not None:
             motor_id = self.motor['motor_id']
             controller.setAcceleration(motor_id, 0)
-            controller.setSpeed(self.motor['motor_id'], self.motor['speed'])
+            controller.setSpeed(motor_id, self.motor['speed'])
             controller.setTarget(motor_id, value)
 
     def getValue(self):

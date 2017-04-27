@@ -48,28 +48,28 @@ class MotorController(object):
             if self.controller is not None:
                 for i in range(24):
                     try:
-                        self.channels[i].position = self.controller.getPosition(i)/4
+                        self.channels[i].position = self.controller.getPosition(i)/4.0
                     except Exception as ex:
                         logger.error(ex)
-                    logger.info('Device: {}, ID: {}, Position: {}'.format(
+                    logger.debug('Device: {}, ID: {}, Position: {}'.format(
                         self.device, i, self.channels[i].position))
             time.sleep(0.1)
 
     def setTarget(self, id, value):
         try:
-            self.controller.setTarget(id, value)
+            self.controller.setTarget(id, int(value*4))
         except Exception as ex:
             logger.error(ex)
 
     def setSpeed(self, id, value):
         try:
-            self.controller.setSpeed(id, value)
+            self.controller.setSpeed(id, int(value))
         except Exception as ex:
             logger.error(ex)
 
     def setAcceleration(self, id, value):
         try:
-            self.controller.setAcceleration(id, value)
+            self.controller.setAcceleration(id, int(value))
         except Exception as ex:
             logger.error(ex)
 
