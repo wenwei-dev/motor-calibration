@@ -15,6 +15,7 @@ class MotorValueEditor(QtGui.QWidget):
         self.model = model
         self.row = row
         self.motor = self.model.motors[self.row]
+        self.app = QtGui.QApplication.instance()
 
         self.ui = Ui_Form()
         self.ui.setupUi(self)
@@ -27,7 +28,6 @@ class MotorValueEditor(QtGui.QWidget):
         self.polljob.daemon = True
         self.polljob.start()
         self.ui.enableCheckBox.toggled.connect(self.enableMotor)
-        self.app = QtGui.QApplication.instance()
 
     def get_controller(self):
         device = self.motor['device']

@@ -2,6 +2,7 @@ from pololu.motors import Maestro
 import threading
 import logging
 import time
+import os
 
 logger = logging.getLogger(__name__)
 
@@ -17,6 +18,12 @@ class MotorController(object):
 
     def __init__(self, device):
         self.device = device
+        if 'ttyACM' in os.path.basename(os.readlink(self.device)):
+            self.hardware = 'pololu'
+        elif 'dynamixel' in os.path.basename(self.device):
+            self.hardware = 'dynamixel'
+        else:
+            self.hardware = 'unknown'
         self.controller = None
         self.channels = {}
         for i in range(24):
@@ -28,7 +35,9 @@ class MotorController(object):
     def init_device(self):
         if self.controller is None:
             try:
-                self.controller = Maestro(self.device)
+                if self.hardware == 'pololu':
+                    self.controller = Maestro(self.device)
+                    logger.info("Pololu controller {} is initialized".format(self.device))
             except Exception as ex:
                 self.controller = None
                 logger.error(ex)
@@ -38,20 +47,32 @@ class MotorController(object):
             self.init_device()
             if self.controller is not None:
                 for i in range(24):
-                    self.channels[i].position = self.controller.getPosition(i)/4
+                    try:
+                        self.channels[i].position = self.controller.getPosition(i)/4
+                    except Exception as ex:
+                        logger.error(ex)
                     logger.info('Device: {}, ID: {}, Position: {}'.format(
                         self.device, i, self.channels[i].position))
             time.sleep(0.1)
 
     def setTarget(self, id, value):
-        self.controller.setTarget(id, value)
+        try:
+            self.controller.setTarget(id, value)
+        except Exception as ex:
+            logger.error(ex)
+
+    def setSpeed(self, id, value):
+        try:
+            self.controller.setSpeed(id, value)
+        except Exception as ex:
+            logger.error(ex)
+
+    def setAcceleration(self, id, value):
+        try:
+            self.controller.setAcceleration(id, value)
+        except Exception as ex:
+            logger.error(ex)
 
     def getPosition(self, id):
         return self.channels[id].position
-
-    def setSpeed(self, id, value):
-        self.controller.setSpeed(id, value)
-
-    def setAcceleration(self, id, value):
-        self.controller.setAcceleration(id, value)
 
