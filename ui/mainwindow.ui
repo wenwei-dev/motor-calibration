@@ -178,14 +178,10 @@
    <attribute name="toolBarBreak">
     <bool>false</bool>
    </attribute>
-   <addaction name="actionLoad_motor_settings"/>
+   <addaction name="actionLoad_Motor_Settings"/>
+   <addaction name="actionSave_Motor_Settings"/>
    <addaction name="actionExit"/>
   </widget>
-  <action name="actionLoad_motor_settings">
-   <property name="text">
-    <string>Load motor settings...</string>
-   </property>
-  </action>
   <action name="actionExit">
    <property name="text">
     <string>Exit</string>
@@ -197,6 +193,16 @@
    </property>
    <property name="toolTip">
     <string>Edit Motors</string>
+   </property>
+  </action>
+  <action name="actionSave_Motor_Settings">
+   <property name="text">
+    <string>Save Motor Settings</string>
+   </property>
+  </action>
+  <action name="actionLoad_Motor_Settings">
+   <property name="text">
+    <string>Load Motor Settings</string>
    </property>
   </action>
  </widget>

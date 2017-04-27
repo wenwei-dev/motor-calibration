@@ -61,7 +61,7 @@ class MotorController(object):
                         logger.error(traceback.format_exc())
                     logger.debug('Device: {}, ID: {}, Position: {}'.format(
                         self.device, i, self.channels[i].position))
-            time.sleep(0.1)
+            time.sleep(0.2)
 
     def setTarget(self, id, value):
         try:

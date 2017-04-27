@@ -20,7 +20,8 @@ class MainWindow(QtGui.QMainWindow):
         self.init_menu()
         self.init_action()
         self.ui.actionExit.triggered.connect(self.close)
-        self.ui.actionLoad_motor_settings.triggered.connect(self.load_motor_settings_dialog)
+        self.ui.actionLoad_Motor_Settings.triggered.connect(self.load_motor_settings_dialog)
+        self.ui.actionSave_Motor_Settings.triggered.connect(self.save_motor_settings_dialog)
         self.tree_model = MotorTreeModel()
         self.ui.treeView.setModel(self.tree_model)
         self.ui.treeView.selectionModel().selectionChanged.connect(self.selectMotor)
@@ -32,7 +33,7 @@ class MainWindow(QtGui.QMainWindow):
         self.app = QtGui.QApplication.instance()
         self.app.motors = []
         self.app.motor_controllers = {}
-        self.load_motor_settings('/home/wenwei/motors_settings.yaml')
+        self.filename = None
 
     def init_menu(self):
         self.treeMenu = QtGui.QMenu(self.ui.treeView)
@@ -50,6 +51,11 @@ class MainWindow(QtGui.QMainWindow):
         dialog = QtGui.QFileDialog(self, filter='*.yaml')
         dialog.show()
         dialog.fileSelected.connect(self.load_motor_settings)
+
+    def save_motor_settings_dialog(self):
+        dialog = QtGui.QFileDialog(self, filter='*.yaml')
+        dialog.show()
+        dialog.fileSelected.connect(self.save_motor_settings)
 
     def saveMotors(self):
         for motor in self.ui.tableView.model().motors:
@@ -121,16 +127,33 @@ class MainWindow(QtGui.QMainWindow):
             self.treeMenu.exec_(global_point)
 
     def load_motor_settings(self, filename):
+        self.filename = filename
         logger.info("Load motor settings {}".format(filename))
         with open(filename) as f:
             motors = yaml.load(f)
             for motor in motors:
-                motor['device'] = motor['topic']
+                motor['device'] = '/dev/hr/head/sophia6/{}'.format(motor['topic'])
                 saved_motor = {'saved_{}'.format(k): v for k, v in motor.items()}
                 motor.update(saved_motor)
             self.app.motors.extend(motors)
             self.tree_model.addMotors(motors)
             self.ui.treeView.expandAll()
+
+    def save_motor_settings(self, filename):
+        filename = str(filename)
+        if os.path.splitext(filename)[1] != '.yaml':
+            filename = filename+'.yaml'
+        with open(filename, 'w') as f:
+            saved_motors = []
+            for motor in self.app.motors:
+                saved_motor = {}
+                for k, v in motor.items():
+                    if k.startswith('saved_'):
+                        k2 = k.split('_',1)[1]
+                        saved_motor[k2] = motor[k]
+                saved_motors.append(saved_motor)
+            yaml.dump(saved_motors, f, default_flow_style=False)
+            logger.info("Saved to {}".format(filename))
 
     def monitor_devices(self):
         while True:
@@ -141,4 +164,4 @@ class MainWindow(QtGui.QMainWindow):
                         filename = os.path.join(dirpath, filename)
                         devices.append(filename)
             self.tree_model.updateDevices(devices)
-            time.sleep(0.1)
+            time.sleep(0.5)
