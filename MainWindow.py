@@ -132,7 +132,7 @@ class MainWindow(QtGui.QMainWindow):
         with open(filename) as f:
             motors = yaml.load(f)
             for motor in motors:
-                motor['device'] = '/dev/hr/head/sophia6/{}'.format(motor['topic'])
+                motor['device'] = motor['topic']
                 saved_motor = {'saved_{}'.format(k): v for k, v in motor.items()}
                 motor.update(saved_motor)
             self.app.motors.extend(motors)

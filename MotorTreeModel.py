@@ -31,13 +31,14 @@ class MotorTreeModel(QtGui.QStandardItemModel):
             for row in range(start, end+1):
                 node = self.devices.child(row)
                 device = node.data().toPyObject()[0]
+                name = str(node.text())
                 if device in self.app.motor_controllers:
                     logger.info("Device {} is already added".format(device))
                 else:
                     try:
                         controller = MotorController(str(device))
-                        self.app.motor_controllers[device] = controller
-                        logger.info("Added controller {}".format(device))
+                        self.app.motor_controllers[name] = controller
+                        logger.info("Added controller {}:{}".format(name, device))
                     except Exception as ex:
                         logger.error(ex)
 
@@ -62,13 +63,14 @@ class MotorTreeModel(QtGui.QStandardItemModel):
         for row in reversed(range(self.devices.rowCount())):
             node = self.devices.child(row)
             device = node.data().toPyObject()[0]
+            name = str(node.text())
             if device not in devices:
                 self.devices.removeRow(row)
                 logger.info("Removed device {}".format(device))
-                if device in self.app.motor_controllers:
-                    self.app.motor_controllers[device].active = False
-                    del self.app.motor_controllers[device]
-                    logger.warn("Removed controller {}".format(device))
+                if name in self.app.motor_controllers:
+                    self.app.motor_controllers[name].active = False
+                    del self.app.motor_controllers[name]
+                    logger.warn("Removed controller {}:{}".format(name, device))
             else:
                 current_devices.append(device)
 

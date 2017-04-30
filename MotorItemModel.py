@@ -39,6 +39,8 @@ class MotorValueEditor(QtGui.QWidget):
         if device in self.app.motor_controllers:
             controller = self.app.motor_controllers[device]
             return controller
+        else:
+            logger.error("Can't get controller {}".format(device))
 
     def enableMotor(self, enable):
         self.ui.motorValueSlider.setEnabled(enable)
@@ -73,6 +75,7 @@ class MotorValueEditor(QtGui.QWidget):
                 controller.setAcceleration(motor_id, 0)
                 controller.setSpeed(motor_id, int(self.motor['speed']))
                 controller.setTarget(motor_id, int(value*4))
+                logger.info("Set motor {} position {}".format(self.motor['name'], value))
 
     def getValue(self):
         return self.ui.motorValueDoubleSpinBox.value()
