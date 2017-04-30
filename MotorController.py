@@ -40,7 +40,7 @@ class MotorController(object):
         if self.controller is None:
             try:
                 if self.hardware == 'pololu':
-                    self.controller = Maestro(self.device, readTimeout=0.2)
+                    self.controller = Maestro(self.device, readTimeout=0.05)
                     logger.info("Pololu controller {} is initialized".format(self.device))
             except Exception as ex:
                 self.controller = None
@@ -61,7 +61,7 @@ class MotorController(object):
                         logger.error(traceback.format_exc())
                     logger.debug('Device: {}, ID: {}, Position: {}'.format(
                         self.device, i, self.channels[i].position))
-            time.sleep(0.2)
+            time.sleep(0.05)
 
     def setTarget(self, id, value):
         try:

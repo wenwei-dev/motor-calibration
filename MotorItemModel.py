@@ -62,8 +62,9 @@ class MotorValueEditor(QtGui.QWidget):
                 if controller is not None:
                     position = controller.getPosition(self.motor['motor_id'])
                     self.ui.motorValueSlider.setMotorPosition(position)
-                    logger.info("Get motor {} position {}".format(self.motor['name'], position))
-                time.sleep(0.2)
+                    self.ui.motorValueSlider.setValue(int(position*4))
+                    logger.debug("Get motor {} position {}".format(self.motor['name'], position))
+                time.sleep(0.05)
             except Exception as ex:
                 logger.error(traceback.format_exc())
 
