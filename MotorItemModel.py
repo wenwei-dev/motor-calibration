@@ -25,9 +25,6 @@ class MotorValueEditor(QtGui.QWidget):
         self.ui.setInitButton.clicked.connect(self.setInitValue)
         self.ui.setMaxButton.clicked.connect(self.setMaxValue)
         self.ui.setMinButton.clicked.connect(self.setMinValue)
-        self.ui.enableCheckBox.toggled.connect(self.enableMotor)
-        self.ui.motorValueDoubleSpinBox.setEnabled(False)
-        self.ui.motorValueSlider.setEnabled(False)
 
         self.active = True
         self.polljob = threading.Thread(target=self.poll)
@@ -42,18 +39,26 @@ class MotorValueEditor(QtGui.QWidget):
         else:
             logger.error("Can't get controller {}".format(self.app.motor_controllers))
 
-    def enableMotor(self, enable):
-        self.ui.motorValueSlider.setEnabled(enable)
-        self.ui.motorValueDoubleSpinBox.setEnabled(enable)
-
     def sliderValueChanged(self, value):
-        motor_value = value/4
-        self.ui.motorValueDoubleSpinBox.setValue(motor_value)
-        self.setMotorValue(motor_value)
+        value = value/4
+        if value > self.motor['max']:
+            logger.warn("Motor value is greater than maximum")
+            return
+        elif value < self.motor['min']:
+            logger.warn("Motor value is lower than minimum")
+            return
+        self.ui.motorValueDoubleSpinBox.setValue(value)
+        self.setMotorTarget(value)
 
     def spinValueChanged(self, value):
+        if value > self.motor['max']:
+            logger.warn("Motor value is greater than maximum")
+            return
+        elif value < self.motor['min']:
+            logger.warn("Motor value is lower than minimum")
+            return
         self.ui.motorValueSlider.setValue(int(value*4))
-        self.setMotorValue(value)
+        self.setMotorTarget(value)
 
     def poll(self):
         while self.active:
@@ -68,8 +73,14 @@ class MotorValueEditor(QtGui.QWidget):
             except Exception as ex:
                 logger.error(traceback.format_exc())
 
-    def setMotorValue(self, value):
+    def setMotorTarget(self, value):
         if self.ui.enableCheckBox.isChecked():
+            if value > self.motor['max']:
+                logger.warn("Motor value is greater than maximum")
+                return
+            elif value < self.motor['min']:
+                logger.warn("Motor value is lower than minimum")
+                return
             controller = self.get_controller()
             if controller is not None:
                 motor_id = self.motor['motor_id']
@@ -126,17 +137,6 @@ class MotorItemModel(QtCore.QAbstractTableModel):
         self.motors = []
         self.fields = ['name', 'device', 'motor_id', 'init', 'min', 'max']
         self.header = ['Name', 'Device', 'MotorID', 'Init', 'Min', 'Max', 'Editor']
-
-        self.timer = QtCore.QTimer(self)
-        self.timer.setInterval(1000)
-        self.timer.timeout.connect(self.refresh)
-        #self.timer.start()
-
-    def refresh(self):
-        editor_index = self.header.index('Editor')
-        first = self.createIndex(0, 0)
-        last = self.createIndex(self.rowCount(QtCore.QModelIndex()), editor_index)
-        self.emit(QtCore.SIGNAL("dataChanged"), first, last)
 
     def addMotor(self, motor):
         self.motors.append(motor)
