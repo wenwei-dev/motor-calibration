@@ -8,6 +8,7 @@ class MotorValueSlider(QtGui.QSlider):
     def __init__(self, parent):
         super(MotorValueSlider, self).__init__(parent)
         self.motor_position = 0
+        self.last_motor_position = 0
 
     def setMotorPosition(self, value):
         self.motor_position = value
@@ -20,8 +21,13 @@ class MotorValueSlider(QtGui.QSlider):
         super(MotorValueSlider, self).paintEvent(event)
         painter = QtGui.QPainter(self)
         painter.setPen(QtGui.QColor(255, 0, 0, 200))
-        painter.setBrush(QtGui.QBrush(QtGui.QColor(0, 255, 0, 200)))
+        if self.motor_position == self.last_motor_position:
+            painter.setBrush(QtGui.QBrush(QtGui.QColor(0, 255, 0, 200)))
+        else:
+            painter.setBrush(QtGui.QBrush(QtGui.QColor(0, 0, 255, 200)))
+            self.last_motor_position = self.motor_position
         x = QtGui.QStyle.sliderPositionFromValue(self.minimum(), self.maximum(), int(self.motor_position*4), self.width())
         y = self.height()/2.0
         center = QtCore.QPointF(x, y)
         painter.drawEllipse(center, 5, 5)
+        painter.drawText(x, y, '{}'.format(self.motor_position))
