@@ -31,12 +31,9 @@
            <property name="text">
             <string>Save</string>
            </property>
-          </widget>
-         </item>
-         <item>
-          <widget class="QPushButton" name="neutralButton">
-           <property name="text">
-            <string>Neutral</string>
+           <property name="icon">
+            <iconset resource="res/res.qrc">
+             <normaloff>:/icon/save.ico</normaloff>:/icon/save.ico</iconset>
            </property>
           </widget>
          </item>
@@ -44,6 +41,17 @@
           <widget class="QPushButton" name="resetButton">
            <property name="text">
             <string>Reset</string>
+           </property>
+           <property name="icon">
+            <iconset resource="res/res.qrc">
+             <normaloff>:/icon/reset.ico</normaloff>:/icon/reset.ico</iconset>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QPushButton" name="neutralButton">
+           <property name="text">
+            <string>Neutral</string>
            </property>
           </widget>
          </item>
@@ -183,6 +191,10 @@
    <addaction name="actionExit"/>
   </widget>
   <action name="actionExit">
+   <property name="icon">
+    <iconset resource="res/res.qrc">
+     <normaloff>:/icon/quit.ico</normaloff>:/icon/quit.ico</iconset>
+   </property>
    <property name="text">
     <string>Exit</string>
    </property>
@@ -196,16 +208,26 @@
    </property>
   </action>
   <action name="actionSave_Motor_Settings">
+   <property name="icon">
+    <iconset resource="res/res.qrc">
+     <normaloff>:/icon/save.ico</normaloff>:/icon/save.ico</iconset>
+   </property>
    <property name="text">
     <string>Save Motor Settings</string>
    </property>
   </action>
   <action name="actionLoad_Motor_Settings">
+   <property name="icon">
+    <iconset resource="res/res.qrc">
+     <normaloff>:/icon/open.ico</normaloff>:/icon/open.ico</iconset>
+   </property>
    <property name="text">
     <string>Load Motor Settings</string>
    </property>
   </action>
  </widget>
- <resources/>
+ <resources>
+  <include location="res/res.qrc"/>
+ </resources>
  <connections/>
 </ui>

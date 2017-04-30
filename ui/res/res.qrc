@@ -1,0 +1,8 @@
+<RCC>
+  <qresource prefix="icon">
+    <file>reset.ico</file>
+    <file>quit.ico</file>
+    <file>open.ico</file>
+    <file>save.ico</file>
+  </qresource>
+</RCC>

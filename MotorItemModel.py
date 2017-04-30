@@ -112,6 +112,7 @@ class MotorValueDelegate(QtGui.QItemDelegate):
         editor.setGeometry(option.rect)
 
     def destroyEditor(self, editor, index):
+        print "destroy"
         editor.active = False
 
 class MotorItemModel(QtCore.QAbstractTableModel):
