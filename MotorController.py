@@ -84,3 +84,5 @@ class MotorController(object):
     def getPosition(self, id):
         return self.channels[id].position
 
+    def __repr__(self):
+        return "<MotorController {}>".format(self.device)

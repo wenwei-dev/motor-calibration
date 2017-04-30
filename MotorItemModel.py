@@ -40,7 +40,7 @@ class MotorValueEditor(QtGui.QWidget):
             controller = self.app.motor_controllers[device]
             return controller
         else:
-            logger.error("Can't get controller {}".format(device))
+            logger.error("Can't get controller {}".format(self.app.motor_controllers))
 
     def enableMotor(self, enable):
         self.ui.motorValueSlider.setEnabled(enable)
@@ -62,7 +62,7 @@ class MotorValueEditor(QtGui.QWidget):
                 if controller is not None:
                     position = controller.getPosition(self.motor['motor_id'])
                     self.ui.motorValueSlider.setMotorPosition(position)
-                    logger.debug("Get motor {} position {}".format(self.motor['name'], position))
+                    logger.info("Get motor {} position {}".format(self.motor['name'], position))
                 time.sleep(0.2)
             except Exception as ex:
                 logger.error(traceback.format_exc())
