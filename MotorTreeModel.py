@@ -4,6 +4,8 @@ import os
 import logging
 from MotorController import MotorController
 import threading
+import subprocess
+
 
 logger = logging.getLogger(__name__)
 
@@ -39,6 +41,13 @@ class MotorTreeModel(QtGui.QStandardItemModel):
         elif motor['hardware'] == 'dynamixel':
             self.dynamixel.appendRow(node)
 
+    def query_pololu_device_serial(self, device):
+        output = subprocess.check_output(['udevadm', 'info', '-q', 'property', '-n', device])
+        for line in output.splitlines():
+            if line.startswith('ID_SERIAL_SHORT'):
+                serial_id = line.split('=')[1]
+                return serial_id
+
     def updateDevices(self, devices):
         with self._lock:
             current_devices = []
@@ -62,8 +71,12 @@ class MotorTreeModel(QtGui.QStandardItemModel):
             for device in devices:
                 if device in current_devices:
                     continue
+                serial_id = self.query_pololu_device_serial(device)
                 name = os.path.split(device)[-1]
-                node = QtGui.QStandardItem(name)
+                prop_name = name
+                if serial_id:
+                    prop_name = '{} ({})'.format(name, serial_id)
+                node = QtGui.QStandardItem(prop_name)
                 node.setEditable(False)
                 node.setData(QtCore.QVariant((device,)))
                 node.setToolTip(device)
