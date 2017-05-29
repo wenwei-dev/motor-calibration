@@ -6,8 +6,8 @@ import time
 from PyQt4 import QtCore
 from PyQt4 import QtGui
 from ui.mainwindow import Ui_MainWindow
-from MotorItemModel import MotorItemModel, MotorValueDelegate
 from MotorTreeModel import MotorTreeModel
+from MotorValueEditor import MotorValueEditor
 
 logger = logging.getLogger(__name__)
 
@@ -35,6 +35,8 @@ class MainWindow(QtGui.QMainWindow):
         self.app.motor_controllers = {}
         self.filename = None
 
+        self.load_motor_settings('/home/wenwei/workspace/hansonrobotics/motor-controller/motors_settings2.yaml')
+
     def init_menu(self):
         self.treeMenu = QtGui.QMenu(self.ui.treeView)
         self.treeMenu.addAction(self.ui.actionEditMotors)
@@ -58,7 +60,7 @@ class MainWindow(QtGui.QMainWindow):
         dialog.fileSelected.connect(self.save_motor_settings)
 
     def saveMotors(self):
-        for motor in self.ui.tableView.model().motors:
+        for motor in self.ui.tableWidget.model().motors:
             for k in motor.keys():
                 if not k.startswith('saved_'):
                     k2 = 'saved_{}'.format(k)
@@ -68,7 +70,7 @@ class MainWindow(QtGui.QMainWindow):
                         motor[k2] = motor[k]
 
     def resetMotors(self):
-        for motor in self.ui.tableView.model().motors:
+        for motor in self.ui.tableWidget.model().motors:
             for k in motor.keys():
                 if not k.startswith('saved_'):
                     k2 = 'saved_{}'.format(k)
@@ -101,24 +103,19 @@ class MainWindow(QtGui.QMainWindow):
         self.editMotors()
 
     def addMotorsToController(self, motors):
-        model = MotorItemModel()
-        for motor in motors:
-            model.addMotor(motor)
+        for col in reversed(range(self.ui.tableWidget.columnCount())):
+            self.ui.tableWidget.removeColumn(col)
 
-        editor_index = model.header.index('Editor')
-        delegate = MotorValueDelegate(model)
-        old_model = self.ui.tableView.model()
-        if old_model:
-            for row in range(old_model.rowCount(QtCore.QModelIndex())):
-                index = model.createIndex(row, editor_index)
-                self.ui.tableView.closePersistentEditor(index)
-        self.ui.tableView.setModel(model)
-        self.ui.tableView.verticalHeader().hide()
-        self.ui.tableView.setItemDelegateForColumn(editor_index, delegate)
-        self.ui.tableView.setColumnWidth(editor_index, 800)
-        for row in range(model.rowCount(QtCore.QModelIndex())):
-            index = model.createIndex(row, editor_index)
-            self.ui.tableView.openPersistentEditor(index)
+        self.ui.tableWidget.setColumnCount(2)
+        self.ui.tableWidget.setColumnWidth(1, 800)
+        self.ui.tableWidget.setRowCount(len(motors))
+
+        for i, motor in enumerate(motors):
+            widget = MotorValueEditor(self.ui.tableWidget, motor)
+            widget.setVisible(True)
+            widget.setActive(True)
+            self.ui.tableWidget.setItem(i, 0, QtGui.QTableWidgetItem(motor['name']))
+            self.ui.tableWidget.setCellWidget(i, 1, widget)
 
     def onTreeViewContextMenu(self, point):
         index = self.ui.treeView.indexAt(point)
@@ -135,7 +132,7 @@ class MainWindow(QtGui.QMainWindow):
                 motor['device'] = motor['topic']
                 saved_motor = {'saved_{}'.format(k): v for k, v in motor.items()}
                 motor.update(saved_motor)
-            self.app.motors.extend(motors)
+            self.app.motors = motors
             self.tree_model.addMotors(motors)
             self.ui.treeView.expandAll()
 

@@ -2,7 +2,8 @@
 
 # Form implementation generated from reading ui file 'ui/mainwindow.ui'
 #
-# Created by: PyQt4 UI code generator 4.12
+# Created: Mon May 29 18:05:09 2017
+#      by: PyQt4 UI code generator 4.10.4
 #
 # WARNING! All changes made in this file will be lost!
 
@@ -25,7 +26,7 @@ except AttributeError:
 class Ui_MainWindow(object):
     def setupUi(self, MainWindow):
         MainWindow.setObjectName(_fromUtf8("MainWindow"))
-        MainWindow.resize(800, 588)
+        MainWindow.resize(891, 667)
         self.centralwidget = QtGui.QWidget(MainWindow)
         self.centralwidget.setObjectName(_fromUtf8("centralwidget"))
         self.horizontalLayout = QtGui.QHBoxLayout(self.centralwidget)
@@ -56,14 +57,17 @@ class Ui_MainWindow(object):
         spacerItem = QtGui.QSpacerItem(40, 20, QtGui.QSizePolicy.Expanding, QtGui.QSizePolicy.Minimum)
         self.horizontalLayout_2.addItem(spacerItem)
         self.verticalLayout_2.addLayout(self.horizontalLayout_2)
-        self.tableView = QtGui.QTableView(self.frame)
-        self.tableView.setLineWidth(0)
-        self.tableView.setSelectionBehavior(QtGui.QAbstractItemView.SelectRows)
-        self.tableView.setShowGrid(True)
-        self.tableView.setGridStyle(QtCore.Qt.NoPen)
-        self.tableView.setSortingEnabled(True)
-        self.tableView.setObjectName(_fromUtf8("tableView"))
-        self.verticalLayout_2.addWidget(self.tableView)
+        self.tableWidget = QtGui.QTableWidget(self.frame)
+        self.tableWidget.setLineWidth(0)
+        self.tableWidget.setSelectionBehavior(QtGui.QAbstractItemView.SelectRows)
+        self.tableWidget.setShowGrid(True)
+        self.tableWidget.setGridStyle(QtCore.Qt.NoPen)
+        self.tableWidget.setObjectName(_fromUtf8("tableWidget"))
+        self.tableWidget.setColumnCount(0)
+        self.tableWidget.setRowCount(0)
+        self.tableWidget.horizontalHeader().setVisible(False)
+        self.tableWidget.verticalHeader().setVisible(False)
+        self.verticalLayout_2.addWidget(self.tableWidget)
         self.motorPropertyWidget = QtGui.QWidget(self.frame)
         self.motorPropertyWidget.setObjectName(_fromUtf8("motorPropertyWidget"))
         self.gridLayout_2 = QtGui.QGridLayout(self.motorPropertyWidget)
@@ -110,7 +114,6 @@ class Ui_MainWindow(object):
         self.dockWidgetContents = QtGui.QWidget()
         self.dockWidgetContents.setObjectName(_fromUtf8("dockWidgetContents"))
         self.verticalLayout = QtGui.QVBoxLayout(self.dockWidgetContents)
-        self.verticalLayout.setMargin(0)
         self.verticalLayout.setObjectName(_fromUtf8("verticalLayout"))
         self.treeView = QtGui.QTreeView(self.dockWidgetContents)
         self.treeView.setContextMenuPolicy(QtCore.Qt.CustomContextMenu)
@@ -151,6 +154,7 @@ class Ui_MainWindow(object):
         self.saveButton.setText(_translate("MainWindow", "Save", None))
         self.resetButton.setText(_translate("MainWindow", "Reset", None))
         self.neutralButton.setText(_translate("MainWindow", "Neutral", None))
+        self.tableWidget.setSortingEnabled(True)
         self.label_10.setText(_translate("MainWindow", "Function", None))
         self.label_8.setText(_translate("MainWindow", "Accerlation", None))
         self.label_7.setText(_translate("MainWindow", "Speed", None))

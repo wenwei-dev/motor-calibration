@@ -85,7 +85,7 @@ class MotorTreeModel(QtGui.QStandardItemModel):
                 try:
                     controller = MotorController(str(device))
                     self.app.motor_controllers[name] = controller
-                    logger.info("Added controller {}:{}".format(name, device))
+                    logger.info("Added controller {}".format(controller))
                 except Exception as ex:
                     logger.error(ex)
 

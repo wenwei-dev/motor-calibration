@@ -42,6 +42,8 @@ class MotorController(object):
                 if self.hardware == 'pololu':
                     self.controller = Maestro(self.device, readTimeout=0.05)
                     logger.info("Pololu controller {} is initialized".format(self.device))
+                else:
+                    logger.info("Unknown device {}".format(self.device))
             except Exception as ex:
                 self.controller = None
                 logger.error(traceback.format_exc())
