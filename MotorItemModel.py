@@ -27,9 +27,12 @@ class MotorValueEditor(QtGui.QWidget):
         self.ui.setMinButton.clicked.connect(self.setMinValue)
 
         self.active = True
+        self.stopped = False
         self.polljob = threading.Thread(target=self.poll)
         self.polljob.daemon = True
         self.polljob.start()
+
+        self.destroyed.connect(self.delete)
 
     def get_controller(self):
         device = str(self.motor['device'])
@@ -61,17 +64,18 @@ class MotorValueEditor(QtGui.QWidget):
         self.setMotorTarget(value)
 
     def poll(self):
-        while self.active:
-            try:
-                controller = self.get_controller()
-                if controller is not None:
-                    position = controller.getPosition(self.motor['motor_id'])
-                    self.ui.motorValueSlider.setMotorPosition(position)
-                    self.ui.motorValueSlider.setValue(int(position*4))
-                    logger.debug("Get motor {} position {}".format(self.motor['name'], position))
-                time.sleep(0.05)
-            except Exception as ex:
-                logger.error(traceback.format_exc())
+        while not self.stopped:
+            if self.active:
+                try:
+                    controller = self.get_controller()
+                    if controller is not None:
+                        position = controller.getPosition(self.motor['motor_id'])
+                        self.ui.motorValueSlider.setMotorPosition(position)
+                        self.ui.motorValueSlider.setValue(int(position*4))
+                        logger.debug("Get motor {} position {}".format(self.motor['name'], position))
+                    time.sleep(0.05)
+                except Exception as ex:
+                    logger.error(traceback.format_exc())
 
     def setMotorTarget(self, value):
         if self.ui.enableCheckBox.isChecked():
@@ -105,6 +109,10 @@ class MotorValueEditor(QtGui.QWidget):
         value = self.getValue()
         self.model.setData(index, self.getValue(), QtCore.Qt.EditRole)
 
+    
+    def delete(self):
+        self.stopped = True
+
 class MotorValueDelegate(QtGui.QItemDelegate):
 
     def __init__(self, model):
@@ -125,10 +133,6 @@ class MotorValueDelegate(QtGui.QItemDelegate):
 
     def updateEditorGeometry(self, editor, option, index):
         editor.setGeometry(option.rect)
-
-    def destroyEditor(self, editor, index):
-        print "destroy"
-        editor.active = False
 
 class MotorItemModel(QtCore.QAbstractTableModel):
 
