@@ -29,6 +29,7 @@ class MainWindow(QtGui.QMainWindow):
         self.ui.treeView.selectionModel().selectionChanged.connect(self.selectMotor)
         self.ui.treeView.customContextMenuRequested.connect(self.onTreeViewContextMenu)
         self.ui.tableWidget.cellChanged.connect(self.cellChanged)
+        self.ui.tableWidget.setAlternatingRowColors(True)
         self.timer = QtCore.QTimer(self)
         self.timer.timeout.connect(self.updateView)
         self.timer.start(300)
@@ -230,4 +231,12 @@ class MainWindow(QtGui.QMainWindow):
         for row in range(self.ui.tableWidget.rowCount()):
             widget = self.ui.tableWidget.cellWidget(row, columnCount-1)
             widget.ui.motorValueSlider.update()
+            motor = widget.motor
+            for col, key in enumerate(self.motor_header.values()):
+                item = self.ui.tableWidget.item(row, col)
+                data = item.data(QtCore.Qt.EditRole).toPyObject()
+                if motor['saved_{}'.format(key)] != data:
+                    item.setForeground(QtGui.QBrush(QtGui.QColor(65,105,225)))
+                else:
+                    item.setForeground(QtGui.QBrush(QtGui.QColor(0,0,0)))
         self.ui.tableWidget.viewport().update()

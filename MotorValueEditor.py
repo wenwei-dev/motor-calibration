@@ -47,7 +47,7 @@ class MotorValueEditor(QtGui.QWidget):
             logger.error("Can't get controller {}".format(self.app.motor_controllers))
 
     def sliderValueChanged(self, value):
-        value = value/4
+        value = value/4.0
         if value > self.motor['max']:
             logger.warn("Motor value is greater than maximum")
             return

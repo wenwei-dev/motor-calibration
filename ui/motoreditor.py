@@ -2,7 +2,7 @@
 
 # Form implementation generated from reading ui file 'ui/motoreditor.ui'
 #
-# Created: Wed May 31 13:17:57 2017
+# Created: Wed May 31 13:32:37 2017
 #      by: PyQt4 UI code generator 4.10.4
 #
 # WARNING! All changes made in this file will be lost!
@@ -54,6 +54,7 @@ class Ui_Form(object):
         self.motorValueDoubleSpinBox.setEnabled(True)
         self.motorValueDoubleSpinBox.setMinimum(800.0)
         self.motorValueDoubleSpinBox.setMaximum(2500.0)
+        self.motorValueDoubleSpinBox.setSingleStep(0.25)
         self.motorValueDoubleSpinBox.setObjectName(_fromUtf8("motorValueDoubleSpinBox"))
         self.horizontalLayout.addWidget(self.motorValueDoubleSpinBox)
         self.setMinButton = QtGui.QPushButton(Form)
