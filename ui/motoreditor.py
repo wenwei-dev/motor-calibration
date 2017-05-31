@@ -2,7 +2,8 @@
 
 # Form implementation generated from reading ui file 'ui/motoreditor.ui'
 #
-# Created by: PyQt4 UI code generator 4.12
+# Created: Wed May 31 13:17:57 2017
+#      by: PyQt4 UI code generator 4.10.4
 #
 # WARNING! All changes made in this file will be lost!
 
@@ -27,8 +28,8 @@ class Ui_Form(object):
         Form.setObjectName(_fromUtf8("Form"))
         Form.resize(600, 36)
         self.verticalLayout = QtGui.QVBoxLayout(Form)
-        self.verticalLayout.setMargin(0)
         self.verticalLayout.setSpacing(0)
+        self.verticalLayout.setMargin(0)
         self.verticalLayout.setObjectName(_fromUtf8("verticalLayout"))
         self.horizontalLayout = QtGui.QHBoxLayout()
         self.horizontalLayout.setSpacing(0)

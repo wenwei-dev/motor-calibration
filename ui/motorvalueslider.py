@@ -12,10 +12,10 @@ class MotorValueSlider(QtGui.QSlider):
 
     def setMotorPosition(self, value):
         self.motor_position = value
-        try:
-            self.update()
-        except Exception as ex:
-            logger.error(ex)
+        #try:
+        #    self.update()
+        #except Exception as ex:
+        #    logger.error(ex)
 
     def paintEvent(self, event):
         super(MotorValueSlider, self).paintEvent(event)

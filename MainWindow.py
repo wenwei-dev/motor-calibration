@@ -2,6 +2,7 @@ import os
 import logging
 import yaml
 import threading
+from multiprocessing.dummy import Pool as ThreadPool
 import time
 from PyQt4 import QtCore
 from PyQt4 import QtGui
@@ -28,6 +29,10 @@ class MainWindow(QtGui.QMainWindow):
         self.ui.treeView.selectionModel().selectionChanged.connect(self.selectMotor)
         self.ui.treeView.customContextMenuRequested.connect(self.onTreeViewContextMenu)
         self.ui.tableWidget.cellChanged.connect(self.cellChanged)
+        self.timer = QtCore.QTimer(self)
+        self.timer.timeout.connect(self.updateView)
+        self.timer.start(300)
+
         self.motor_header = OrderedDict()
         self.motor_header['Name'] = 'name'
         self.motor_header['Device'] = 'device'
@@ -42,6 +47,7 @@ class MainWindow(QtGui.QMainWindow):
         self.app = QtGui.QApplication.instance()
         self.app.motors = []
         self.app.motor_controllers = {}
+        self.app.motor_header = self.motor_header
         self.filename = None
 
         self.load_motor_settings('/home/wenwei/workspace/hansonrobotics/motor-controller/motors_settings.yaml')
@@ -92,9 +98,20 @@ class MainWindow(QtGui.QMainWindow):
             logger.info("Reset {}".format(motor['name']))
 
     def neutralMotors(self):
-        import pprint
-        for motor in self.getCurrentMotors():
-            pprint.pprint(motor)
+        columnCount = self.ui.tableWidget.columnCount()
+        widgets = []
+        for row in range(self.ui.tableWidget.rowCount()):
+            widget = self.ui.tableWidget.cellWidget(row, columnCount-1)
+            widgets.append(widget)
+
+        def update(widget):
+            widget.setValue(widget.motor['saved_init'])
+
+        pool = ThreadPool(8)
+        pool.map(update, widgets)
+        pool.close()
+        pool.join()
+        logger.info("Set motor to neutral")
 
     def editMotors(self):
         indexes = self.ui.treeView.selectedIndexes()
@@ -129,18 +146,17 @@ class MainWindow(QtGui.QMainWindow):
         self.ui.tableWidget.setColumnWidth(len(header), 800)
         self.ui.tableWidget.setHorizontalHeaderLabels(header+['Editor'])
 
-        for i, motor in enumerate(motors):
+        for row, motor in enumerate(motors):
             for col, key in enumerate(self.motor_header.values()):
                 item = QtGui.QTableWidgetItem()
-                #item.setText(str(motor[key]))
                 item.setData(QtCore.Qt.EditRole, motor[key])
-                self.ui.tableWidget.setItem(i, col, item)
-                item = self.ui.tableWidget.item(i, col)
+                self.ui.tableWidget.setItem(row, col, item)
+                item = self.ui.tableWidget.item(row, col)
 
-            widget = MotorValueEditor(self.ui.tableWidget, motor)
-            self.ui.tableWidget.setCellWidget(i, len(header), widget)
-            widget.setVisible(True)
-            widget.setActive(True)
+            widget = MotorValueEditor(self.ui.tableWidget, motor, row)
+            self.ui.tableWidget.setCellWidget(row, len(header), widget)
+            widget.setVisible(False)
+        self.neutralMotors()
 
     def getCurrentMotors(self):
         motors = []
@@ -207,3 +223,11 @@ class MainWindow(QtGui.QMainWindow):
             data = item.data(QtCore.Qt.EditRole).toPyObject()
             motor[motor_attrib] = data
             logger.info("Update motor {}={}".format(motor_attrib, data))
+
+    def updateView(self):
+        columnCount = self.ui.tableWidget.columnCount()
+        widgets = []
+        for row in range(self.ui.tableWidget.rowCount()):
+            widget = self.ui.tableWidget.cellWidget(row, columnCount-1)
+            widget.ui.motorValueSlider.update()
+        self.ui.tableWidget.viewport().update()

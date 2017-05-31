@@ -9,9 +9,11 @@ from ui.motoreditor import Ui_Form
 logger = logging.getLogger(__name__)
 
 class MotorValueEditor(QtGui.QWidget):
-    def __init__(self, parent, motor):
+    def __init__(self, parent, motor, row):
         super(MotorValueEditor, self).__init__(parent)
+        self.tableWidget = parent
         self.motor = motor
+        self.row = row
         self.app = QtGui.QApplication.instance()
 
         self.ui = Ui_Form()
@@ -21,8 +23,14 @@ class MotorValueEditor(QtGui.QWidget):
         self.ui.setInitButton.clicked.connect(self.setInitValue)
         self.ui.setMaxButton.clicked.connect(self.setMaxValue)
         self.ui.setMinButton.clicked.connect(self.setMinValue)
+        self.ui.motorValueSlider.setMinimum(self.motor['min']*4)
+        self.ui.motorValueSlider.setMaximum(self.motor['max']*4)
+        self.ui.motorValueDoubleSpinBox.setMinimum(self.motor['min'])
+        self.ui.motorValueDoubleSpinBox.setMaximum(self.motor['max'])
+        self.ui.motorValueSlider.installEventFilter(self)
+        self.ui.motorValueDoubleSpinBox.installEventFilter(self)
 
-        self.active = False
+        self.update = False
         self.stopped = False
         self.polljob = threading.Thread(target=self.poll)
         self.polljob.daemon = True
@@ -57,18 +65,17 @@ class MotorValueEditor(QtGui.QWidget):
             logger.warn("Motor value is lower than minimum")
             return
         self.ui.motorValueSlider.setValue(int(value*4))
-        self.setMotorTarget(value)
 
     def poll(self):
         while not self.stopped:
-            if self.active:
+            if self.update:
                 try:
                     controller = self.get_controller()
                     if controller is not None:
                         motor_id = self.motor['motor_id']
                         position = controller.getPosition(motor_id)
                         self.ui.motorValueSlider.setMotorPosition(position)
-                        self.ui.motorValueSlider.setValue(int(position*4))
+                        #self.ui.motorValueSlider.setValue(int(position*4))
                         logger.debug("Get motor {}({}) position {}".format(self.motor['name'], motor_id, position))
                     time.sleep(0.05)
                 except Exception as ex:
@@ -90,25 +97,53 @@ class MotorValueEditor(QtGui.QWidget):
                 controller.setAcceleration(motor_id, 0)
                 controller.setSpeed(motor_id, int(self.motor['speed']))
                 controller.setTarget(motor_id, int(value*4))
-                logger.info("Set motor {}({}) position {}".format(self.motor['name'], motor_id, value))
+                logger.debug("Set motor {}({}) position {}".format(self.motor['name'], motor_id, value))
 
     def getValue(self):
         return self.ui.motorValueDoubleSpinBox.value()
 
+    def setValue(self, value):
+        while True:
+            self.setUpdate(False)
+            self.ui.motorValueDoubleSpinBox.setValue(value)
+            self.setUpdate(True)
+            break
+            time.sleep(0.1)
+
     def setInitValue(self):
-        if self.motor is not None:
-            self.motor['init'] = self.getValue()
+        self.setMotorConfig('init', self.getValue())
 
     def setMaxValue(self):
-        if self.motor is not None:
-            self.motor['max'] = self.getValue()
+        value = self.getValue()
+        self.setMotorConfig('max', value)
+        self.ui.motorValueSlider.setMaximum(value*4)
+        self.ui.motorValueDoubleSpinBox.setMaximum(value)
 
     def setMinValue(self):
-        if self.motor is not None:
-            self.motor['min'] = self.getValue()
+        value = self.getValue()
+        self.setMotorConfig('min', value)
+        self.ui.motorValueSlider.setMaximum(value*4)
+        self.ui.motorValueDoubleSpinBox.setMaximum(value)
 
-    def setActive(self, active):
-        self.active = active
+    def setMotorConfig(self, key, value):
+        if self.motor is not None:
+            self.motor[key] = value
+            col = self.app.motor_header.values().index(key)
+            item = self.tableWidget.item(self.row, col)
+            if item is not None:
+                item.setData(QtCore.Qt.EditRole, self.motor[key])
+
+    def setUpdate(self, update):
+        self.update = update
 
     def delete(self):
         self.stopped = True
+
+    def eventFilter(self, obj, event):
+        """Ignore wheel event"""
+        if event.type() == QtCore.QEvent.Wheel:
+            event.ignore()
+            return True
+        else:
+            return False
+
