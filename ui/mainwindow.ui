@@ -115,6 +115,9 @@
               <property name="lineWidth">
                <number>0</number>
               </property>
+              <property name="alternatingRowColors">
+               <bool>true</bool>
+              </property>
               <property name="selectionBehavior">
                <enum>QAbstractItemView::SelectRows</enum>
               </property>
@@ -215,6 +218,9 @@
         </item>
         <item>
          <widget class="QTableWidget" name="pauTableWidget">
+          <property name="alternatingRowColors">
+           <bool>true</bool>
+          </property>
           <column>
            <property name="text">
             <string>Key</string>
@@ -242,7 +248,10 @@
          </widget>
         </item>
         <item>
-         <widget class="QTableWidget" name="tableWidget_2">
+         <widget class="QTableWidget" name="motorTableWidget">
+          <property name="alternatingRowColors">
+           <bool>true</bool>
+          </property>
           <column>
            <property name="text">
             <string>Motor Name</string>

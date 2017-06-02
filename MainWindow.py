@@ -10,6 +10,8 @@ from ui.mainwindow import Ui_MainWindow
 from MotorTreeModel import MotorTreeModel
 from MotorValueEditor import MotorValueEditor
 from collections import OrderedDict
+import subprocess
+from blender import SHAPE_KEYS
 
 logger = logging.getLogger(__name__)
 
@@ -29,7 +31,18 @@ class MainWindow(QtGui.QMainWindow):
         self.ui.treeView.selectionModel().selectionChanged.connect(self.selectMotor)
         self.ui.treeView.customContextMenuRequested.connect(self.onTreeViewContextMenu)
         self.ui.tableWidget.cellChanged.connect(self.cellChanged)
-        self.ui.tableWidget.setAlternatingRowColors(True)
+        self.blender_proc = subprocess.Popen(['python', 'blender.py'],
+                stdout=subprocess.PIPE, stderr=subprocess.PIPE,
+                preexec_fn=os.setsid)
+        self.blender_thread = threading.Thread(
+            target=self.readpau, args=(self.blender_proc.stdout,))
+        self.blender_thread.daemon = True
+        self.blender_thread.start()
+        self.ui.pauTableWidget.setRowCount(len(SHAPE_KEYS))
+        self.ui.pauTableWidget.setColumnCount(2)
+        self.ui.pauTableWidget.setEditTriggers(QtGui.QAbstractItemView.NoEditTriggers)
+
+
         self.timer = QtCore.QTimer(self)
         self.timer.timeout.connect(self.updateView)
         self.timer.start(300)
@@ -240,3 +253,25 @@ class MainWindow(QtGui.QMainWindow):
                 else:
                     item.setForeground(QtGui.QBrush(QtGui.QColor(0,0,0)))
         self.ui.tableWidget.viewport().update()
+
+    def readpau(self, f):
+        for line in iter(f.readline, ''):
+            coeffs = eval(line)
+            for row, (key, value) in enumerate(zip(SHAPE_KEYS, coeffs)):
+                key_item = self.ui.pauTableWidget.item(row, 0)
+                if key_item is None:
+                    key_item = QtGui.QTableWidgetItem(key)
+                    self.ui.pauTableWidget.setItem(row, 0, key_item)
+                else:
+                    key_item.setText(key)
+                value_item = self.ui.pauTableWidget.item(row, 1)
+                if value_item is None:
+                    value_item = QtGui.QTableWidgetItem()
+                    value_item.setData(QtCore.Qt.DisplayRole, value)
+                    self.ui.pauTableWidget.setItem(row, 1, value_item)
+                else:
+                    value_item.setData(QtCore.Qt.DisplayRole, value)
+                print row, key, value
+
+    def closeEvent(self, event):
+        os.killpg(self.blender_proc.pid, 2)

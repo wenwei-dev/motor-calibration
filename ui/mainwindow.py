@@ -2,7 +2,7 @@
 
 # Form implementation generated from reading ui file 'ui/mainwindow.ui'
 #
-# Created: Wed May 31 15:32:42 2017
+# Created: Wed May 31 16:28:46 2017
 #      by: PyQt4 UI code generator 4.10.4
 #
 # WARNING! All changes made in this file will be lost!
@@ -80,6 +80,7 @@ class Ui_MainWindow(object):
         self.verticalLayout_2.addLayout(self.horizontalLayout_2)
         self.tableWidget = QtGui.QTableWidget(self.frame)
         self.tableWidget.setLineWidth(0)
+        self.tableWidget.setAlternatingRowColors(True)
         self.tableWidget.setSelectionBehavior(QtGui.QAbstractItemView.SelectRows)
         self.tableWidget.setShowGrid(True)
         self.tableWidget.setGridStyle(QtCore.Qt.NoPen)
@@ -138,6 +139,7 @@ class Ui_MainWindow(object):
         self.horizontalLayout_4.addWidget(self.savePAUButton)
         self.verticalLayout.addLayout(self.horizontalLayout_4)
         self.pauTableWidget = QtGui.QTableWidget(self.pauTab)
+        self.pauTableWidget.setAlternatingRowColors(True)
         self.pauTableWidget.setObjectName(_fromUtf8("pauTableWidget"))
         self.pauTableWidget.setColumnCount(2)
         self.pauTableWidget.setRowCount(0)
@@ -154,15 +156,16 @@ class Ui_MainWindow(object):
         self.saveMotorPositionButton = QtGui.QPushButton(self.motorTab)
         self.saveMotorPositionButton.setObjectName(_fromUtf8("saveMotorPositionButton"))
         self.verticalLayout_3.addWidget(self.saveMotorPositionButton)
-        self.tableWidget_2 = QtGui.QTableWidget(self.motorTab)
-        self.tableWidget_2.setObjectName(_fromUtf8("tableWidget_2"))
-        self.tableWidget_2.setColumnCount(2)
-        self.tableWidget_2.setRowCount(0)
+        self.motorTableWidget = QtGui.QTableWidget(self.motorTab)
+        self.motorTableWidget.setAlternatingRowColors(True)
+        self.motorTableWidget.setObjectName(_fromUtf8("motorTableWidget"))
+        self.motorTableWidget.setColumnCount(2)
+        self.motorTableWidget.setRowCount(0)
         item = QtGui.QTableWidgetItem()
-        self.tableWidget_2.setHorizontalHeaderItem(0, item)
+        self.motorTableWidget.setHorizontalHeaderItem(0, item)
         item = QtGui.QTableWidgetItem()
-        self.tableWidget_2.setHorizontalHeaderItem(1, item)
-        self.verticalLayout_3.addWidget(self.tableWidget_2)
+        self.motorTableWidget.setHorizontalHeaderItem(1, item)
+        self.verticalLayout_3.addWidget(self.motorTableWidget)
         self.tabWidget.addTab(self.motorTab, _fromUtf8(""))
         self.horizontalLayout.addWidget(self.tabWidget)
         MainWindow.setCentralWidget(self.centralwidget)
@@ -214,9 +217,9 @@ class Ui_MainWindow(object):
         item.setText(_translate("MainWindow", "Value", None))
         self.tabWidget.setTabText(self.tabWidget.indexOf(self.pauTab), _translate("MainWindow", "PAU", None))
         self.saveMotorPositionButton.setText(_translate("MainWindow", "Save Motor Position", None))
-        item = self.tableWidget_2.horizontalHeaderItem(0)
+        item = self.motorTableWidget.horizontalHeaderItem(0)
         item.setText(_translate("MainWindow", "Motor Name", None))
-        item = self.tableWidget_2.horizontalHeaderItem(1)
+        item = self.motorTableWidget.horizontalHeaderItem(1)
         item.setText(_translate("MainWindow", "Value", None))
         self.tabWidget.setTabText(self.tabWidget.indexOf(self.motorTab), _translate("MainWindow", "Motors", None))
         self.toolBar.setWindowTitle(_translate("MainWindow", "toolBar", None))
