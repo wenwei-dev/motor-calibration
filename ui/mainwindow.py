@@ -2,7 +2,7 @@
 
 # Form implementation generated from reading ui file 'ui/mainwindow.ui'
 #
-# Created: Wed May 31 16:28:46 2017
+# Created: Fri Jun  2 11:56:22 2017
 #      by: PyQt4 UI code generator 4.10.4
 #
 # WARNING! All changes made in this file will be lost!
@@ -139,6 +139,7 @@ class Ui_MainWindow(object):
         self.horizontalLayout_4.addWidget(self.savePAUButton)
         self.verticalLayout.addLayout(self.horizontalLayout_4)
         self.pauTableWidget = QtGui.QTableWidget(self.pauTab)
+        self.pauTableWidget.setEditTriggers(QtGui.QAbstractItemView.NoEditTriggers)
         self.pauTableWidget.setAlternatingRowColors(True)
         self.pauTableWidget.setObjectName(_fromUtf8("pauTableWidget"))
         self.pauTableWidget.setColumnCount(2)
@@ -157,6 +158,7 @@ class Ui_MainWindow(object):
         self.saveMotorPositionButton.setObjectName(_fromUtf8("saveMotorPositionButton"))
         self.verticalLayout_3.addWidget(self.saveMotorPositionButton)
         self.motorTableWidget = QtGui.QTableWidget(self.motorTab)
+        self.motorTableWidget.setEditTriggers(QtGui.QAbstractItemView.NoEditTriggers)
         self.motorTableWidget.setAlternatingRowColors(True)
         self.motorTableWidget.setObjectName(_fromUtf8("motorTableWidget"))
         self.motorTableWidget.setColumnCount(2)

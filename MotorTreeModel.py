@@ -6,7 +6,6 @@ from MotorController import MotorController
 import threading
 import subprocess
 
-
 logger = logging.getLogger(__name__)
 
 class MotorTreeModel(QtGui.QStandardItemModel):
@@ -41,7 +40,7 @@ class MotorTreeModel(QtGui.QStandardItemModel):
         elif motor['hardware'] == 'dynamixel':
             self.dynamixel.appendRow(node)
 
-    def query_pololu_device_serial(self, device):
+    def query_device_serial(self, device):
         output = subprocess.check_output(['udevadm', 'info', '-q', 'property', '-n', device])
         for line in output.splitlines():
             if line.startswith('ID_SERIAL_SHORT'):
@@ -71,7 +70,7 @@ class MotorTreeModel(QtGui.QStandardItemModel):
             for device in devices:
                 if device in current_devices:
                     continue
-                serial_id = self.query_pololu_device_serial(device)
+                serial_id = self.query_device_serial(device)
                 name = os.path.split(device)[-1]
                 prop_name = name
                 if serial_id:
@@ -82,12 +81,20 @@ class MotorTreeModel(QtGui.QStandardItemModel):
                 node.setToolTip(device)
                 self.devices.appendRow(node)
                 logger.info("Added new device {}".format(device))
-                try:
-                    controller = MotorController(str(device))
-                    self.app.motor_controllers[name] = controller
-                    logger.info("Added controller {}".format(controller))
-                except Exception as ex:
-                    logger.error(ex)
+                if os.path.basename(device) == 'dynamixel':
+                    try:
+                        controller = MotorController(str(device), ids=range(7))
+                        self.app.motor_controllers[name] = controller
+                        logger.info("Added controller {}".format(controller))
+                    except Exception as ex:
+                        logger.error(ex)
+                else:
+                    try:
+                        controller = MotorController(str(device), ids=range(24))
+                        self.app.motor_controllers[name] = controller
+                        logger.info("Added controller {}".format(controller))
+                    except Exception as ex:
+                        logger.error(ex)
 
     def headerData(self, section, orientation, role):
         if role == QtCore.Qt.DisplayRole:

@@ -40,8 +40,6 @@ class MainWindow(QtGui.QMainWindow):
         self.blender_thread.start()
         self.ui.pauTableWidget.setRowCount(len(SHAPE_KEYS))
         self.ui.pauTableWidget.setColumnCount(2)
-        self.ui.pauTableWidget.setEditTriggers(QtGui.QAbstractItemView.NoEditTriggers)
-
 
         self.timer = QtCore.QTimer(self)
         self.timer.timeout.connect(self.updateView)
@@ -271,7 +269,6 @@ class MainWindow(QtGui.QMainWindow):
                     self.ui.pauTableWidget.setItem(row, 1, value_item)
                 else:
                     value_item.setData(QtCore.Qt.DisplayRole, value)
-                print row, key, value
 
     def closeEvent(self, event):
         os.killpg(self.blender_proc.pid, 2)
