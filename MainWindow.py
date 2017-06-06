@@ -31,15 +31,6 @@ class MainWindow(QtGui.QMainWindow):
         self.ui.treeView.selectionModel().selectionChanged.connect(self.selectMotor)
         self.ui.treeView.customContextMenuRequested.connect(self.onTreeViewContextMenu)
         self.ui.tableWidget.cellChanged.connect(self.cellChanged)
-        self.blender_proc = subprocess.Popen(['python', 'blender.py'],
-                stdout=subprocess.PIPE, stderr=subprocess.PIPE,
-                preexec_fn=os.setsid)
-        self.blender_thread = threading.Thread(
-            target=self.readpau, args=(self.blender_proc.stdout,))
-        self.blender_thread.daemon = True
-        self.blender_thread.start()
-        self.ui.pauTableWidget.setRowCount(len(SHAPE_KEYS))
-        self.ui.pauTableWidget.setColumnCount(2)
 
         self.timer = QtCore.QTimer(self)
         self.timer.timeout.connect(self.updateView)
@@ -56,11 +47,26 @@ class MainWindow(QtGui.QMainWindow):
         self.device_monitor_job = threading.Thread(target=self.monitor_devices)
         self.device_monitor_job.daemon = True
         self.device_monitor_job.start()
+
         self.app = QtGui.QApplication.instance()
         self.app.motors = []
         self.app.motor_controllers = {}
         self.app.motor_header = self.motor_header
         self.filename = None
+
+        self.blender_proc = subprocess.Popen(['python', 'blender.py'],
+                stdout=subprocess.PIPE, stderr=subprocess.PIPE,
+                preexec_fn=os.setsid)
+        self.blender_thread = threading.Thread(
+            target=self.readPAU, args=(self.blender_proc.stdout,))
+        self.blender_thread.daemon = True
+        self.blender_thread.start()
+        self.ui.pauTableWidget.setRowCount(len(SHAPE_KEYS))
+        self.ui.pauTableWidget.setColumnCount(2)
+
+        self.motor_value_thread = threading.Thread(target=self.readMotorValues)
+        self.motor_value_thread.daemon = True
+        self.motor_value_thread.start()
 
         self.load_motor_settings('/home/wenwei/workspace/hansonrobotics/motor-controller/motors_settings.yaml')
 
@@ -197,6 +203,16 @@ class MainWindow(QtGui.QMainWindow):
             self.tree_model.addMotors(motors)
             self.ui.treeView.expandAll()
 
+            self.ui.motorTableWidget.setRowCount(len(motors))
+            self.ui.motorTableWidget.setColumnCount(2)
+            for row, motor in enumerate(self.app.motors):
+                key_item = self.ui.motorTableWidget.item(row, 0)
+                key_item = QtGui.QTableWidgetItem(motor['name'])
+                self.ui.motorTableWidget.setItem(row, 0, key_item)
+                value_item = QtGui.QTableWidgetItem()
+                value_item.setData(QtCore.Qt.DisplayRole, -1)
+                self.ui.motorTableWidget.setItem(row, 1, value_item)
+
     def save_motor_settings(self, filename):
         filename = str(filename)
         if os.path.splitext(filename)[1] != '.yaml':
@@ -252,7 +268,7 @@ class MainWindow(QtGui.QMainWindow):
                     item.setForeground(QtGui.QBrush(QtGui.QColor(0,0,0)))
         self.ui.tableWidget.viewport().update()
 
-    def readpau(self, f):
+    def readPAU(self, f):
         for line in iter(f.readline, ''):
             coeffs = eval(line)
             for row, (key, value) in enumerate(zip(SHAPE_KEYS, coeffs)):
@@ -269,6 +285,22 @@ class MainWindow(QtGui.QMainWindow):
                     self.ui.pauTableWidget.setItem(row, 1, value_item)
                 else:
                     value_item.setData(QtCore.Qt.DisplayRole, value)
+
+    def readMotorValues(self):
+        while True:
+            for motor in self.app.motors:
+                device = str(motor['device'])
+                controller = self.app.motor_controllers.get(device)
+                if controller is not None:
+                    position = controller.getPosition(motor['motor_id'])
+                    item = self.ui.motorTableWidget.findItems(
+                        motor['name'], QtCore.Qt.MatchExactly)
+                    if item:
+                        motor_item = item[0]
+                        row = motor_item.row()
+                        value_item = self.ui.motorTableWidget.item(row, 1)
+                        value_item.setData(QtCore.Qt.DisplayRole, position)
+            time.sleep(0.2)
 
     def closeEvent(self, event):
         os.killpg(self.blender_proc.pid, 2)

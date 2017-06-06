@@ -120,7 +120,10 @@ class MotorController(object):
             logger.error(traceback.format_exc())
 
     def getPosition(self, id):
-        return self.channels[id].position
+        if id in self.channels:
+            return self.channels[id].position
+        else:
+            return -1
 
     def discover_dynamixel_motors(self, min_motor_id, max_motor_id):
         while self.active:
