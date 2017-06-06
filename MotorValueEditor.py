@@ -29,6 +29,7 @@ class MotorValueEditor(QtGui.QWidget):
         self.ui.motorValueDoubleSpinBox.setMaximum(self.motor['max'])
         self.ui.motorValueSlider.installEventFilter(self)
         self.ui.motorValueDoubleSpinBox.installEventFilter(self)
+        self.ui.enableCheckBox.toggled.connect(self.enableMotor)
 
         self.update = False
         self.stopped = False
@@ -74,9 +75,10 @@ class MotorValueEditor(QtGui.QWidget):
                     if controller is not None:
                         motor_id = self.motor['motor_id']
                         position = controller.getPosition(motor_id)
-                        self.ui.motorValueSlider.setMotorPosition(position)
-                        #self.ui.motorValueSlider.setValue(int(position*4))
-                        logger.debug("Get motor {}({}) position {}".format(self.motor['name'], motor_id, position))
+                        if position is not None:
+                            self.ui.motorValueSlider.setMotorPosition(position)
+                            #self.ui.motorValueSlider.setValue(int(position*4))
+                            logger.debug("Get motor {}({}) position {}".format(self.motor['name'], motor_id, position))
                     time.sleep(0.05)
                 except Exception as ex:
                     logger.error(traceback.format_exc())
@@ -94,9 +96,12 @@ class MotorValueEditor(QtGui.QWidget):
             controller = self.get_controller()
             if controller is not None:
                 motor_id = self.motor['motor_id']
-                controller.setAcceleration(motor_id, 0)
-                controller.setSpeed(motor_id, int(self.motor['speed']))
-                controller.setTarget(motor_id, int(value*4))
+                if controller.hardware == 'dynamixel':
+                    controller.setTarget(motor_id, int(value))
+                else:
+                    controller.setAcceleration(motor_id, 0)
+                    controller.setSpeed(motor_id, int(self.motor['speed']))
+                    controller.setTarget(motor_id, int(value*4))
                 logger.debug("Set motor {}({}) position {}".format(self.motor['name'], motor_id, value))
 
     def getValue(self):
@@ -147,3 +152,7 @@ class MotorValueEditor(QtGui.QWidget):
         else:
             return False
 
+    def enableMotor(self, enabled):
+        controller = self.get_controller()
+        if controller is not None:
+            controller.enableMotor(self.motor['motor_id'], enabled)

@@ -86,7 +86,7 @@ class MotorController(object):
                         except Exception as ex:
                             channel.valid = False
                             logger.error(traceback.format_exc())
-                        logger.info('Device: {}, ID: {}, Position: {}'.format(
+                        logger.debug('Device: {}, ID: {}, Position: {}'.format(
                             self.device, channel.id, channel.position))
             time.sleep(0.05)
 
@@ -96,6 +96,8 @@ class MotorController(object):
                 self.controller.setTarget(id, value)
             elif self.hardware == 'dynamixel':
                 self.controller.set_position(id, value)
+        except dynamixel_io.DroppedPacketError as ex:
+            logger.warn("Error in setting target for motor {}, {}".format(id, ex))
         except Exception as ex:
             logger.error(traceback.format_exc())
 
@@ -128,10 +130,36 @@ class MotorController(object):
                 try:
                     response = self.controller.ping(i)
                     if response:
-                        self.channels[i] = ChannelInfo(i)
+                        if i not in self.channels:
+                            self.channels[i] = ChannelInfo(i)
+                        angle = self.controller.get_angle_limits(i)
+                        mode = self.controller.get_drive_mode(i)
+                        voltage = self.controller.get_voltage(i)
+                        speed = self.controller.get_speed(i)
+                        model_number = self.controller.get_model_number(i)
+                        firmware_version = self.controller.get_firmware_version(i)
+                        #print i, angle, mode, voltage, speed, model_number, firmware_version
                 except Exception as ex:
                     continue
             time.sleep(1)
+
+    def enableMotor(self, id, enabled):
+        if self.hardware == 'dynamixel':
+            retry = 5
+            while retry > 0:
+                try:
+                    response = self.controller.set_torque_enabled(id, enabled)
+                    print 'response', response
+                    if response:
+                        if enabled:
+                            logger.info("Enabled torque for motor {}".format(id))
+                        else:
+                            logger.info("Disabled torque for motor {}".format(id))
+                        break
+                except dynamixel_io.DroppedPacketError as ex:
+                    logger.warn("Error in setting motor torque for motor {}, {}".format(id, ex))
+                time.sleep(0.1)
+                retry -= 1
 
     def __repr__(self):
         return "<MotorController {}>".format(self.device)

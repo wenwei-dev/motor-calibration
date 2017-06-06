@@ -7,8 +7,8 @@ class MotorValueSlider(QtGui.QSlider):
 
     def __init__(self, parent):
         super(MotorValueSlider, self).__init__(parent)
-        self.motor_position = 0
-        self.last_motor_position = 0
+        self.motor_position = -1
+        self.last_motor_position = -1
 
     def setMotorPosition(self, value):
         self.motor_position = value
