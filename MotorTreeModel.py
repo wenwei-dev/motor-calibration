@@ -83,7 +83,7 @@ class MotorTreeModel(QtGui.QStandardItemModel):
                 logger.info("Added new device {}".format(device))
                 if os.path.basename(device) == 'dynamixel':
                     try:
-                        controller = MotorController(str(device), ids=range(7))
+                        controller = MotorController(str(device))
                         self.app.motor_controllers[name] = controller
                         logger.info("Added controller {}".format(controller))
                     except Exception as ex:

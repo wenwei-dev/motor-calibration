@@ -19,7 +19,7 @@ class ChannelInfo(object):
 
 class MotorController(object):
 
-    def __init__(self, device, ids):
+    def __init__(self, device, ids=[]):
         self.device = device
         if 'ttyACM' in os.path.basename(os.readlink(self.device)):
             self.hardware = 'pololu'
@@ -29,13 +29,20 @@ class MotorController(object):
             raise ValueError("Device {} is unknown".format(device))
         self.controller = None
         self.channels = {}
-        for i in ids:
-            self.channels[i] = ChannelInfo(i)
 
         self.active = True
+
         self.poll_job = threading.Thread(target=self.poll)
         self.poll_job.daemon = True
         self.poll_job.start()
+
+        for i in ids:
+            self.channels[i] = ChannelInfo(i)
+        if len(ids) == 0:
+            self.discover_job = threading.Thread(
+                target=self.discover_dynamixel_motors, args=(1, 50))
+            self.discover_job.daemon = True
+            self.discover_job.start()
 
     def init_device(self):
         if self.controller is None:
@@ -70,14 +77,16 @@ class MotorController(object):
                 elif self.hardware == 'dynamixel':
                     for channel in self.channels.values():
                         try:
-                            self.channels[i].position = self.controller.get_position(channel.id)
+                            channel.position = self.controller.get_position(channel.id)
                             channel.valid = True
                         except IndexError:
+                            channel.valid = False
+                        except dynamixel_io.DroppedPacketError:
                             channel.valid = False
                         except Exception as ex:
                             channel.valid = False
                             logger.error(traceback.format_exc())
-                        logger.debug('Device: {}, ID: {}, Position: {}'.format(
+                        logger.info('Device: {}, ID: {}, Position: {}'.format(
                             self.device, channel.id, channel.position))
             time.sleep(0.05)
 
@@ -110,6 +119,19 @@ class MotorController(object):
 
     def getPosition(self, id):
         return self.channels[id].position
+
+    def discover_dynamixel_motors(self, min_motor_id, max_motor_id):
+        while self.active:
+            if self.hardware != 'dynamixel':
+                break
+            for i in range(min_motor_id, max_motor_id+1):
+                try:
+                    response = self.controller.ping(i)
+                    if response:
+                        self.channels[i] = ChannelInfo(i)
+                except Exception as ex:
+                    continue
+            time.sleep(1)
 
     def __repr__(self):
         return "<MotorController {}>".format(self.device)
