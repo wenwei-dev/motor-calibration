@@ -40,6 +40,10 @@ class MotorTreeModel(QtGui.QStandardItemModel):
         elif motor['hardware'] == 'dynamixel':
             self.dynamixel.appendRow(node)
 
+    def removeAllMotors(self):
+        self.pololu.removeRows(0, self.pololu.rowCount())
+        self.dynamixel.removeRows(0, self.dynamixel.rowCount())
+
     def query_device_serial(self, device):
         output = subprocess.check_output(['udevadm', 'info', '-q', 'property', '-n', device])
         for line in output.splitlines():

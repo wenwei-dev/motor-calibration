@@ -200,6 +200,7 @@ class MainWindow(QtGui.QMainWindow):
                 saved_motor = {'saved_{}'.format(k): v for k, v in motor.items()}
                 motor.update(saved_motor)
             self.app.motors = motors
+            self.tree_model.removeAllMotors()
             self.tree_model.addMotors(motors)
             self.ui.treeView.expandAll()
 
@@ -300,7 +301,7 @@ class MainWindow(QtGui.QMainWindow):
                         row = motor_item.row()
                         value_item = self.ui.motorTableWidget.item(row, 1)
                         value_item.setData(QtCore.Qt.DisplayRole, position)
-            time.sleep(0.2)
+            time.sleep(0.1)
 
     def closeEvent(self, event):
         os.killpg(self.blender_proc.pid, 2)

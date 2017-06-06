@@ -2,7 +2,7 @@
 
 # Form implementation generated from reading ui file 'ui/mainwindow.ui'
 #
-# Created: Fri Jun  2 11:56:22 2017
+# Created: Tue Jun  6 15:04:04 2017
 #      by: PyQt4 UI code generator 4.10.4
 #
 # WARNING! All changes made in this file will be lost!
@@ -134,9 +134,6 @@ class Ui_MainWindow(object):
         self.verticalLayout.setObjectName(_fromUtf8("verticalLayout"))
         self.horizontalLayout_4 = QtGui.QHBoxLayout()
         self.horizontalLayout_4.setObjectName(_fromUtf8("horizontalLayout_4"))
-        self.savePAUButton = QtGui.QPushButton(self.pauTab)
-        self.savePAUButton.setObjectName(_fromUtf8("savePAUButton"))
-        self.horizontalLayout_4.addWidget(self.savePAUButton)
         self.verticalLayout.addLayout(self.horizontalLayout_4)
         self.pauTableWidget = QtGui.QTableWidget(self.pauTab)
         self.pauTableWidget.setEditTriggers(QtGui.QAbstractItemView.NoEditTriggers)
@@ -154,9 +151,6 @@ class Ui_MainWindow(object):
         self.motorTab.setObjectName(_fromUtf8("motorTab"))
         self.verticalLayout_3 = QtGui.QVBoxLayout(self.motorTab)
         self.verticalLayout_3.setObjectName(_fromUtf8("verticalLayout_3"))
-        self.saveMotorPositionButton = QtGui.QPushButton(self.motorTab)
-        self.saveMotorPositionButton.setObjectName(_fromUtf8("saveMotorPositionButton"))
-        self.verticalLayout_3.addWidget(self.saveMotorPositionButton)
         self.motorTableWidget = QtGui.QTableWidget(self.motorTab)
         self.motorTableWidget.setEditTriggers(QtGui.QAbstractItemView.NoEditTriggers)
         self.motorTableWidget.setAlternatingRowColors(True)
@@ -212,13 +206,11 @@ class Ui_MainWindow(object):
         self.label_9.setText(_translate("MainWindow", "Group", None))
         self.label_11.setText(_translate("MainWindow", "Parser", None))
         self.tabWidget.setTabText(self.tabWidget.indexOf(self.tab), _translate("MainWindow", "Config", None))
-        self.savePAUButton.setText(_translate("MainWindow", "Save PAU", None))
         item = self.pauTableWidget.horizontalHeaderItem(0)
         item.setText(_translate("MainWindow", "Key", None))
         item = self.pauTableWidget.horizontalHeaderItem(1)
         item.setText(_translate("MainWindow", "Value", None))
         self.tabWidget.setTabText(self.tabWidget.indexOf(self.pauTab), _translate("MainWindow", "PAU", None))
-        self.saveMotorPositionButton.setText(_translate("MainWindow", "Save Motor Position", None))
         item = self.motorTableWidget.horizontalHeaderItem(0)
         item.setText(_translate("MainWindow", "Motor Name", None))
         item = self.motorTableWidget.horizontalHeaderItem(1)

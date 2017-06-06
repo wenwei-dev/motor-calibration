@@ -206,15 +206,7 @@
        </attribute>
        <layout class="QVBoxLayout" name="verticalLayout">
         <item>
-         <layout class="QHBoxLayout" name="horizontalLayout_4">
-          <item>
-           <widget class="QPushButton" name="savePAUButton">
-            <property name="text">
-             <string>Save PAU</string>
-            </property>
-           </widget>
-          </item>
-         </layout>
+         <layout class="QHBoxLayout" name="horizontalLayout_4"/>
         </item>
         <item>
          <widget class="QTableWidget" name="pauTableWidget">
@@ -243,13 +235,6 @@
         <string>Motors</string>
        </attribute>
        <layout class="QVBoxLayout" name="verticalLayout_3">
-        <item>
-         <widget class="QPushButton" name="saveMotorPositionButton">
-          <property name="text">
-           <string>Save Motor Position</string>
-          </property>
-         </widget>
-        </item>
         <item>
          <widget class="QTableWidget" name="motorTableWidget">
           <property name="editTriggers">
