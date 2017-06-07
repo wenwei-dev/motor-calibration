@@ -24,7 +24,6 @@ class MainWindow(QtGui.QMainWindow):
         super(MainWindow, self).__init__(parent)
         self.ui = Ui_MainWindow()
         self.ui.setupUi(self)
-        self.ui.motorPropertyWidget.hide()
         self.init_menu()
         self.init_action()
         self.ui.actionExit.triggered.connect(self.close)
@@ -34,7 +33,7 @@ class MainWindow(QtGui.QMainWindow):
         self.ui.treeView.setModel(self.tree_model)
         self.ui.treeView.selectionModel().selectionChanged.connect(self.selectMotor)
         self.ui.treeView.customContextMenuRequested.connect(self.onTreeViewContextMenu)
-        self.ui.tableWidget.cellChanged.connect(self.cellChanged)
+        self.ui.motorConfigTableWidget.cellChanged.connect(self.cellChanged)
 
         self.timer = QtCore.QTimer(self)
         self.timer.timeout.connect(self.updateView)
@@ -133,10 +132,10 @@ class MainWindow(QtGui.QMainWindow):
             logger.info("Reset {}".format(motor['name']))
 
     def neutralMotors(self):
-        columnCount = self.ui.tableWidget.columnCount()
+        columnCount = self.ui.motorConfigTableWidget.columnCount()
         widgets = []
-        for row in range(self.ui.tableWidget.rowCount()):
-            widget = self.ui.tableWidget.cellWidget(row, columnCount-1)
+        for row in range(self.ui.motorConfigTableWidget.rowCount()):
+            widget = self.ui.motorConfigTableWidget.cellWidget(row, columnCount-1)
             widgets.append(widget)
 
         def update(widget):
@@ -172,32 +171,62 @@ class MainWindow(QtGui.QMainWindow):
         self.editMotors()
 
     def addMotorsToController(self, motors):
-        for col in reversed(range(self.ui.tableWidget.columnCount())):
-            self.ui.tableWidget.removeColumn(col)
+        for col in reversed(range(self.ui.motorConfigTableWidget.columnCount())):
+            self.ui.motorConfigTableWidget.removeColumn(col)
 
         header = self.motor_header.keys()
-        self.ui.tableWidget.setRowCount(len(motors))
-        self.ui.tableWidget.setColumnCount(len(header)+1)
-        self.ui.tableWidget.setColumnWidth(len(header), 800)
-        self.ui.tableWidget.setHorizontalHeaderLabels(header+['Editor'])
+        self.ui.motorConfigTableWidget.setRowCount(len(motors))
+        self.ui.motorConfigTableWidget.setColumnCount(len(header)+1)
+        self.ui.motorConfigTableWidget.setColumnWidth(len(header), 800)
+        self.ui.motorConfigTableWidget.setHorizontalHeaderLabels(header+['Editor'])
 
         for row, motor in enumerate(motors):
             for col, key in enumerate(self.motor_header.values()):
                 item = QtGui.QTableWidgetItem()
                 item.setData(QtCore.Qt.EditRole, motor[key])
-                self.ui.tableWidget.setItem(row, col, item)
-                item = self.ui.tableWidget.item(row, col)
+                self.ui.motorConfigTableWidget.setItem(row, col, item)
 
-            widget = MotorValueEditor(self.ui.tableWidget, motor, row)
-            self.ui.tableWidget.setCellWidget(row, len(header), widget)
+            widget = MotorValueEditor(self.ui.motorConfigTableWidget, motor, row)
+            self.ui.motorConfigTableWidget.setCellWidget(row, len(header), widget)
             widget.setVisible(False)
         self.neutralMotors()
 
+
+        # Update motor value table widget
+        for col in reversed(range(self.ui.motorValueTableWidget.columnCount())):
+            self.ui.motorValueTableWidget.removeColumn(col)
+
+        self.ui.motorValueTableWidget.setRowCount(len(motors))
+        self.ui.motorValueTableWidget.setColumnCount(2)
+        for row, motor in enumerate(motors):
+            key_item = QtGui.QTableWidgetItem(motor['name'])
+            self.ui.motorValueTableWidget.setItem(row, 0, key_item)
+            value_item = QtGui.QTableWidgetItem()
+            value_item.setData(QtCore.Qt.DisplayRole, -1)
+            self.ui.motorValueTableWidget.setItem(row, 1, value_item)
+
+
+        # Update motor value calibration table widget
+        for col in reversed(range(self.ui.motorValueCalibTableWidget.columnCount())):
+            self.ui.motorValueCalibTableWidget.removeColumn(col)
+
+        self.ui.motorValueCalibTableWidget.setRowCount(len(motors))
+        self.ui.motorValueCalibTableWidget.setColumnCount(3)
+        for row, motor in enumerate(motors):
+            key_item = QtGui.QTableWidgetItem(motor['name'])
+            self.ui.motorValueCalibTableWidget.setItem(row, 0, key_item)
+            value_item = QtGui.QTableWidgetItem()
+            value_item.setData(QtCore.Qt.DisplayRole, -1)
+            self.ui.motorValueCalibTableWidget.setItem(row, 1, value_item)
+            widget = MotorValueEditor(self.ui.motorValueCalibTableWidget, motor, row)
+            self.ui.motorValueCalibTableWidget.setCellWidget(row, 2, widget)
+            widget.setVisible(False)
+
     def getCurrentMotors(self):
         motors = []
-        columnCount = self.ui.tableWidget.columnCount()
-        for row in range(self.ui.tableWidget.rowCount()):
-            widget = self.ui.tableWidget.cellWidget(row, columnCount-1)
+        columnCount = self.ui.motorConfigTableWidget.columnCount()
+        for row in range(self.ui.motorConfigTableWidget.rowCount()):
+            widget = self.ui.motorConfigTableWidget.cellWidget(row, columnCount-1)
             motors.append(widget.motor)
         return motors
 
@@ -234,9 +263,6 @@ class MainWindow(QtGui.QMainWindow):
             self.motor_configs = Configs()
             self.motor_configs.parseMotors(motors)
 
-            self.ui.motorValueTableWidget.setRowCount(len(motors))
-            self.ui.motorValueTableWidget.setColumnCount(2)
-
     def save_motor_settings(self, filename):
         filename = str(filename)
         if os.path.splitext(filename)[1] != '.yaml':
@@ -265,9 +291,9 @@ class MainWindow(QtGui.QMainWindow):
             time.sleep(0.5)
 
     def cellChanged(self, row, col):
-        item = self.ui.tableWidget.item(row, col)
-        columnCount = self.ui.tableWidget.columnCount()
-        editor = self.ui.tableWidget.cellWidget(row, columnCount-1)
+        item = self.ui.motorConfigTableWidget.item(row, col)
+        columnCount = self.ui.motorConfigTableWidget.columnCount()
+        editor = self.ui.motorConfigTableWidget.cellWidget(row, columnCount-1)
         if item is not None and editor is not None:
             motor = editor.motor
             motor_attribs = self.motor_header.values()
@@ -277,20 +303,20 @@ class MainWindow(QtGui.QMainWindow):
             logger.info("Update motor {}={}".format(motor_attrib, data))
 
     def updateView(self):
-        columnCount = self.ui.tableWidget.columnCount()
+        columnCount = self.ui.motorConfigTableWidget.columnCount()
         widgets = []
-        for row in range(self.ui.tableWidget.rowCount()):
-            widget = self.ui.tableWidget.cellWidget(row, columnCount-1)
+        for row in range(self.ui.motorConfigTableWidget.rowCount()):
+            widget = self.ui.motorConfigTableWidget.cellWidget(row, columnCount-1)
             widget.ui.motorValueSlider.update()
             motor = widget.motor
             for col, key in enumerate(self.motor_header.values()):
-                item = self.ui.tableWidget.item(row, col)
+                item = self.ui.motorConfigTableWidget.item(row, col)
                 data = item.data(QtCore.Qt.EditRole).toPyObject()
                 if motor['saved_{}'.format(key)] != data:
                     item.setForeground(QtGui.QBrush(QtGui.QColor(65,105,225)))
                 else:
                     item.setForeground(QtGui.QBrush(QtGui.QColor(0,0,0)))
-        self.ui.tableWidget.viewport().update()
+        self.ui.motorConfigTableWidget.viewport().update()
 
     def readPAU(self, f):
         for line in iter(f.readline, ''):
@@ -338,6 +364,7 @@ class MainWindow(QtGui.QMainWindow):
             logger.error("Frame data dimision is incorrect")
         if self.frames.shape[0] > 0:
             self.ui.frameSlider.setValue(0)
+            self.playPAU(0)
 
     def playPAU(self, frame):
         if self.frames is not None and frame < self.frames.shape[0]:
@@ -378,18 +405,20 @@ class MainWindow(QtGui.QMainWindow):
                     else:
                         value = -1
 
-                    key_item = self.ui.motorValueTableWidget.item(row, 0)
-                    if key_item is None:
-                        key_item = QtGui.QTableWidgetItem(motor['name'])
-                        self.ui.motorValueTableWidget.setItem(row, 0, key_item)
-                    else:
-                        key_item.setText(motor['name'])
-                    value_item = self.ui.motorValueTableWidget.item(row, 1)
-                    if value_item is None:
-                        value_item = QtGui.QTableWidgetItem()
+                    item = self.ui.motorValueTableWidget.findItems(
+                        motor['name'], QtCore.Qt.MatchExactly)
+                    if item:
+                        motor_item = item[0]
+                        row = motor_item.row()
+                        value_item = self.ui.motorValueTableWidget.item(row, 1)
                         value_item.setData(QtCore.Qt.DisplayRole, value)
-                        self.ui.motorValueTableWidget.setItem(row, 1, value_item)
-                    else:
+
+                    item = self.ui.motorValueCalibTableWidget.findItems(
+                        motor['name'], QtCore.Qt.MatchExactly)
+                    if item:
+                        motor_item = item[0]
+                        row = motor_item.row()
+                        value_item = self.ui.motorValueCalibTableWidget.item(row, 1)
                         value_item.setData(QtCore.Qt.DisplayRole, value)
             else:
                 logger.error("No motor configs")
