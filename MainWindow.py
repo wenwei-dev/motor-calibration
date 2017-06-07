@@ -451,6 +451,7 @@ class MainWindow(QtGui.QMainWindow):
                             mapper = DefaultMapper(motor)
                         elif str(self.button_group.checkedButton().text()) == 'Trained Mapper':
                             mapper = TrainedMapper(motor)
+                            mapper.set_model('motor_mapping_model.csv')
                         else:
                             logger.error("No motor mapper for {}".format(motor['name']))
                             continue

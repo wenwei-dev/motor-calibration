@@ -20,6 +20,7 @@ def find_params(shapekey_values, targets):
         sum = x[:param_num]*shapekey_values + x[-1]
         diff = sum.sum(axis=1)-targets
         mse = (diff**2).sum()
+        print mse
         return mse
 
     bounds = [(-1, 1)]*(param_num+1)
