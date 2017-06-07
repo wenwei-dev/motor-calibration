@@ -4,26 +4,10 @@ from pau2motors import ParserFactory, MapperFactory
 
 logger = logging.getLogger(__name__)
 
-class DefaultMapper:
+class BaseMapper(object):
 
     def __init__(self, motor_entry):
-
-        binding_obj = motor_entry["pau"]
-
-        self.parser = ParserFactory.build(
-        binding_obj["parser"]
-        )
-        self.mapper = MapperFactory.build(
-        binding_obj["function"],
-        motor_entry
-        )
         self.motor_entry = motor_entry
-
-    def map(self, msg):
-        coeff = self.parser.get_coeff(msg)
-        angle = self.mapper.map(coeff)
-        pos = self.angle2pulse(angle)
-        return pos
 
     def angle2pulse(self, angle):
         rmin = self.motor_entry['min']
@@ -35,6 +19,31 @@ class DefaultMapper:
 
     def _saturated(self, angle):
         return min(max(angle, self.motor_entry['min']), self.motor_entry['max'])  
+
+class DefaultMapper(BaseMapper):
+
+    def __init__(self, motor_entry):
+        super(DefaultMapper, self).__init__(motor_entry)
+        self.parser = ParserFactory.build(
+            motor_entry["pau"]["parser"])
+        self.mapper = MapperFactory.build(
+            motor_entry["pau"]["function"], motor_entry)
+
+    def map(self, msg):
+        coeff = self.parser.get_coeff(msg)
+        angle = self.mapper.map(coeff)
+        angle = self._saturated(angle)
+        pos = self.angle2pulse(angle)
+        return pos
+
+class TrainedMapper(BaseMapper):
+
+    def __init__(self, motor_entry):
+        super(TrainedMapper, self).__init__(motor_entry)
+        self.model = model
+
+    def map(self, msg):
+        return -1
 
 if __name__ == '__main__':
     import pandas as pd

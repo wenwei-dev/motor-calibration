@@ -2,7 +2,7 @@
 
 # Form implementation generated from reading ui file 'ui/mainwindow.ui'
 #
-# Created: Wed Jun  7 17:18:37 2017
+# Created: Wed Jun  7 19:20:22 2017
 #      by: PyQt4 UI code generator 4.10.4
 #
 # WARNING! All changes made in this file will be lost!
@@ -26,7 +26,7 @@ except AttributeError:
 class Ui_MainWindow(object):
     def setupUi(self, MainWindow):
         MainWindow.setObjectName(_fromUtf8("MainWindow"))
-        MainWindow.resize(891, 667)
+        MainWindow.resize(1041, 667)
         self.centralwidget = QtGui.QWidget(MainWindow)
         self.centralwidget.setObjectName(_fromUtf8("centralwidget"))
         self.verticalLayout_6 = QtGui.QVBoxLayout(self.centralwidget)
@@ -96,12 +96,13 @@ class Ui_MainWindow(object):
         self.horizontalLayout.addWidget(self.loadFrameButton)
         self.frameSlider = QtGui.QSlider(self.tab_2)
         self.frameSlider.setEnabled(False)
+        self.frameSlider.setPageStep(1)
         self.frameSlider.setOrientation(QtCore.Qt.Horizontal)
         self.frameSlider.setObjectName(_fromUtf8("frameSlider"))
         self.horizontalLayout.addWidget(self.frameSlider)
-        self.frameLabel = QtGui.QLabel(self.tab_2)
-        self.frameLabel.setObjectName(_fromUtf8("frameLabel"))
-        self.horizontalLayout.addWidget(self.frameLabel)
+        self.frameSpinBox = QtGui.QSpinBox(self.tab_2)
+        self.frameSpinBox.setObjectName(_fromUtf8("frameSpinBox"))
+        self.horizontalLayout.addWidget(self.frameSpinBox)
         self.verticalLayout_9.addLayout(self.horizontalLayout)
         self.splitter_2 = QtGui.QSplitter(self.tab_2)
         sizePolicy = QtGui.QSizePolicy(QtGui.QSizePolicy.Expanding, QtGui.QSizePolicy.Expanding)
@@ -156,6 +157,9 @@ class Ui_MainWindow(object):
         self.horizontalLayout_6.addWidget(self.trainedMapperButton)
         spacerItem1 = QtGui.QSpacerItem(40, 20, QtGui.QSizePolicy.Expanding, QtGui.QSizePolicy.Minimum)
         self.horizontalLayout_6.addItem(spacerItem1)
+        self.saveMotorValuesButton = QtGui.QPushButton(self.tab_3)
+        self.saveMotorValuesButton.setObjectName(_fromUtf8("saveMotorValuesButton"))
+        self.horizontalLayout_6.addWidget(self.saveMotorValuesButton)
         self.enablePlayMotorsCheckBox = QtGui.QCheckBox(self.tab_3)
         self.enablePlayMotorsCheckBox.setObjectName(_fromUtf8("enablePlayMotorsCheckBox"))
         self.horizontalLayout_6.addWidget(self.enablePlayMotorsCheckBox)
@@ -164,12 +168,15 @@ class Ui_MainWindow(object):
         self.motorValueTableWidget.setEditTriggers(QtGui.QAbstractItemView.NoEditTriggers)
         self.motorValueTableWidget.setAlternatingRowColors(True)
         self.motorValueTableWidget.setObjectName(_fromUtf8("motorValueTableWidget"))
-        self.motorValueTableWidget.setColumnCount(2)
+        self.motorValueTableWidget.setColumnCount(3)
         self.motorValueTableWidget.setRowCount(0)
         item = QtGui.QTableWidgetItem()
         self.motorValueTableWidget.setHorizontalHeaderItem(0, item)
         item = QtGui.QTableWidgetItem()
         self.motorValueTableWidget.setHorizontalHeaderItem(1, item)
+        item = QtGui.QTableWidgetItem()
+        self.motorValueTableWidget.setHorizontalHeaderItem(2, item)
+        self.motorValueTableWidget.horizontalHeader().setSortIndicatorShown(False)
         self.motorValueTableWidget.horizontalHeader().setStretchLastSection(True)
         self.motorValueTableWidget.verticalHeader().setStretchLastSection(False)
         self.verticalLayout_5.addWidget(self.motorValueTableWidget)
@@ -180,9 +187,6 @@ class Ui_MainWindow(object):
         self.verticalLayout_8.setObjectName(_fromUtf8("verticalLayout_8"))
         self.horizontalLayout_5 = QtGui.QHBoxLayout()
         self.horizontalLayout_5.setObjectName(_fromUtf8("horizontalLayout_5"))
-        self.saveMotorValuesButton = QtGui.QPushButton(self.tab_4)
-        self.saveMotorValuesButton.setObjectName(_fromUtf8("saveMotorValuesButton"))
-        self.horizontalLayout_5.addWidget(self.saveMotorValuesButton)
         spacerItem2 = QtGui.QSpacerItem(40, 20, QtGui.QSizePolicy.Expanding, QtGui.QSizePolicy.Minimum)
         self.horizontalLayout_5.addItem(spacerItem2)
         self.enableCalibMotorsCheckBox = QtGui.QCheckBox(self.tab_4)
@@ -288,6 +292,8 @@ class Ui_MainWindow(object):
         self.retranslateUi(MainWindow)
         self.playPAUWidget.setCurrentIndex(0)
         self.tabWidget.setCurrentIndex(0)
+        QtCore.QObject.connect(self.frameSlider, QtCore.SIGNAL(_fromUtf8("valueChanged(int)")), self.frameSpinBox.setValue)
+        QtCore.QObject.connect(self.frameSpinBox, QtCore.SIGNAL(_fromUtf8("valueChanged(int)")), self.frameSlider.setValue)
         QtCore.QMetaObject.connectSlotsByName(MainWindow)
 
     def retranslateUi(self, MainWindow):
@@ -299,7 +305,6 @@ class Ui_MainWindow(object):
         self.motorConfigTableWidget.setSortingEnabled(True)
         self.playPAUWidget.setTabText(self.playPAUWidget.indexOf(self.tab), _translate("MainWindow", "Config", None))
         self.loadFrameButton.setText(_translate("MainWindow", "Load Frames", None))
-        self.frameLabel.setText(_translate("MainWindow", "0", None))
         self.label.setText(_translate("MainWindow", "PAU", None))
         item = self.pauValueTableWidget.horizontalHeaderItem(0)
         item.setText(_translate("MainWindow", "Key", None))
@@ -307,13 +312,15 @@ class Ui_MainWindow(object):
         item.setText(_translate("MainWindow", "Value", None))
         self.defaultMapperButton.setText(_translate("MainWindow", "Default Mapper", None))
         self.trainedMapperButton.setText(_translate("MainWindow", "Trained Mapper", None))
+        self.saveMotorValuesButton.setText(_translate("MainWindow", "Save Motor Values", None))
         self.enablePlayMotorsCheckBox.setText(_translate("MainWindow", "Enable Motors", None))
         item = self.motorValueTableWidget.horizontalHeaderItem(0)
         item.setText(_translate("MainWindow", "Motor Name", None))
         item = self.motorValueTableWidget.horizontalHeaderItem(1)
         item.setText(_translate("MainWindow", "Value", None))
+        item = self.motorValueTableWidget.horizontalHeaderItem(2)
+        item.setText(_translate("MainWindow", "Editor", None))
         self.tabWidget.setTabText(self.tabWidget.indexOf(self.tab_3), _translate("MainWindow", "Play", None))
-        self.saveMotorValuesButton.setText(_translate("MainWindow", "Save Motor Values", None))
         self.enableCalibMotorsCheckBox.setText(_translate("MainWindow", "Enable Motors", None))
         item = self.motorValueCalibTableWidget.horizontalHeaderItem(0)
         item.setText(_translate("MainWindow", "Motor Name", None))

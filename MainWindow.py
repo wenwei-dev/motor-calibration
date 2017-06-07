@@ -13,8 +13,9 @@ from collections import OrderedDict
 import subprocess
 from blender import SHAPE_KEYS
 import pandas as pd
+import numpy as np
 from configs import Configs
-from mappers import DefaultMapper
+from mappers import DefaultMapper, TrainedMapper
 import traceback
 
 logger = logging.getLogger(__name__)
@@ -71,6 +72,7 @@ class MainWindow(QtGui.QMainWindow):
         self.ui.frameSlider.valueChanged.connect(self.playPAU)
 
         self.frames = None
+        self.frame_filename = None
         self.motor_value_thread = threading.Thread(target=self.readMotorValues)
         self.motor_value_thread.daemon = True
         self.motor_value_thread.start()
@@ -86,6 +88,10 @@ class MainWindow(QtGui.QMainWindow):
         self.ui.enableCalibMotorsCheckBox.stateChanged.connect(self.enableCalibMotors)
         self.ui.enableConfigMotorsCheckBox.stateChanged.connect(self.enableConfigMotors)
         self.ui.enablePlayMotorsCheckBox.stateChanged.connect(self.enablePlayMotors)
+        self.button_group = QtGui.QButtonGroup(self)
+        self.button_group.addButton(self.ui.defaultMapperButton)
+        self.button_group.addButton(self.ui.trainedMapperButton)
+        self.ui.saveMotorValuesButton.clicked.connect(self.saveMotorValues)
 
         self.load_motor_settings('/home/wenwei/workspace/hansonrobotics/motor-controller/motors_settings.yaml')
         self.load_frames('/home/wenwei/workspace/hansonrobotics/motor-controller/data/shkey_frame_data.csv')
@@ -403,9 +409,13 @@ class MainWindow(QtGui.QMainWindow):
 
     def load_frames(self, filename):
         self.frames = pd.read_csv(filename)
+        self.frame_filename = filename
         self.ui.frameSlider.setEnabled(True)
         self.ui.frameSlider.setMinimum(0)
-        self.ui.frameSlider.setMaximum(self.frames.shape[0])
+        self.ui.frameSlider.setMaximum(self.frames.shape[0]-1)
+        self.ui.frameSpinBox.setEnabled(True)
+        self.ui.frameSpinBox.setMinimum(0)
+        self.ui.frameSpinBox.setMaximum(self.frames.shape[0]-1)
         if self.frames.shape[1] != len(SHAPE_KEYS):
             logger.error("Frame data dimision is incorrect")
         if self.frames.shape[0] > 0:
@@ -414,7 +424,6 @@ class MainWindow(QtGui.QMainWindow):
 
     def playPAU(self, frame):
         if self.frames is not None and frame < self.frames.shape[0]:
-            self.ui.frameLabel.setText(str(frame))
             m_coeffs = self.frames.loc[frame]
 
             # Update table
@@ -438,7 +447,13 @@ class MainWindow(QtGui.QMainWindow):
                 for row, motor in enumerate(self.motor_configs.motors):
                     mapper = None
                     try:
-                        mapper = DefaultMapper(motor)
+                        if str(self.button_group.checkedButton().text()) == 'Default Mapper':
+                            mapper = DefaultMapper(motor)
+                        elif str(self.button_group.checkedButton().text()) == 'Trained Mapper':
+                            mapper = TrainedMapper(motor)
+                        else:
+                            logger.error("No motor mapper for {}".format(motor['name']))
+                            continue
                     except Exception as ex:
                         logger.debug("Can't initilize mapper for motor {}, error {}".format(motor['name'], ex))
                     if mapper is not None:
@@ -459,7 +474,7 @@ class MainWindow(QtGui.QMainWindow):
                         value_item = self.ui.motorValueTableWidget.item(row, 1)
                         value_item.setData(QtCore.Qt.DisplayRole, value)
                         widget = self.ui.motorValueTableWidget.cellWidget(row, 2)
-                        if widget:
+                        if widget and value != -1:
                             widget.ui.motorValueDoubleSpinBox.setValue(value)
 
                     item = self.ui.motorValueCalibTableWidget.findItems(
@@ -471,3 +486,24 @@ class MainWindow(QtGui.QMainWindow):
                         value_item.setData(QtCore.Qt.DisplayRole, value)
             else:
                 logger.error("No motor configs")
+
+    def saveMotorValues(self):
+        frame = self.ui.frameSlider.value()
+        total_frames = self.frames.shape[0]
+        if self.frames is not None and frame < total_frames:
+            filename = '{}-motors.csv'.format(os.path.splitext(self.frame_filename)[0])
+            if not os.path.isfile(filename):
+                names = [motor['name'] for motor in self.app.motors]
+                df = pd.DataFrame(np.nan, index=np.arange(total_frames), columns=names)
+                df.to_csv(filename, index=False)
+
+            df = pd.read_csv(filename)
+            print df
+            motor_positions = [motor.get('current_pos', np.nan) for motor in self.app.motors]
+            df.loc[frame] = motor_positions
+            print motor_positions
+            print filename
+            print df
+            df.to_csv(filename, index=False)
+        else:
+            print frame, total_frames
