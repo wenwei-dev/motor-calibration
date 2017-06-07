@@ -9,7 +9,7 @@ from ui.motoreditor import Ui_Form
 logger = logging.getLogger(__name__)
 
 class MotorValueEditor(QtGui.QWidget):
-    def __init__(self, parent, motor, row):
+    def __init__(self, parent, motor, row, enable_range_setting=True):
         super(MotorValueEditor, self).__init__(parent)
         self.tableWidget = parent
         self.motor = motor
@@ -20,9 +20,6 @@ class MotorValueEditor(QtGui.QWidget):
         self.ui.setupUi(self)
         self.ui.motorValueDoubleSpinBox.valueChanged.connect(self.spinValueChanged)
         self.ui.motorValueSlider.valueChanged.connect(self.sliderValueChanged)
-        self.ui.setInitButton.clicked.connect(self.setInitValue)
-        self.ui.setMaxButton.clicked.connect(self.setMaxValue)
-        self.ui.setMinButton.clicked.connect(self.setMinValue)
         self.ui.motorValueSlider.setMinimum(self.motor['min']*4)
         self.ui.motorValueSlider.setMaximum(self.motor['max']*4)
         self.ui.motorValueDoubleSpinBox.setMinimum(self.motor['min'])
@@ -38,6 +35,18 @@ class MotorValueEditor(QtGui.QWidget):
         self.polljob.start()
 
         self.destroyed.connect(self.delete)
+
+        self.ui.setInitButton.setEnabled(enable_range_setting)
+        self.ui.setMaxButton.setEnabled(enable_range_setting)
+        self.ui.setMinButton.setEnabled(enable_range_setting)
+        if enable_range_setting:
+            self.ui.setInitButton.clicked.connect(self.setInitValue)
+            self.ui.setMaxButton.clicked.connect(self.setMaxValue)
+            self.ui.setMinButton.clicked.connect(self.setMinValue)
+        else:
+            self.ui.setInitButton.hide()
+            self.ui.setMaxButton.hide()
+            self.ui.setMinButton.hide()
 
     def get_controller(self):
         device = str(self.motor['device'])

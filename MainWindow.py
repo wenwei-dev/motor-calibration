@@ -218,9 +218,11 @@ class MainWindow(QtGui.QMainWindow):
             value_item = QtGui.QTableWidgetItem()
             value_item.setData(QtCore.Qt.DisplayRole, -1)
             self.ui.motorValueCalibTableWidget.setItem(row, 1, value_item)
-            widget = MotorValueEditor(self.ui.motorValueCalibTableWidget, motor, row)
+            widget = MotorValueEditor(self.ui.motorValueCalibTableWidget, motor, row, False)
             self.ui.motorValueCalibTableWidget.setCellWidget(row, 2, widget)
             widget.setVisible(False)
+
+        self.playPAU(self.ui.frameSlider.value())
 
     def getCurrentMotors(self):
         motors = []
@@ -364,7 +366,7 @@ class MainWindow(QtGui.QMainWindow):
             logger.error("Frame data dimision is incorrect")
         if self.frames.shape[0] > 0:
             self.ui.frameSlider.setValue(0)
-            self.playPAU(0)
+            self.playPAU(self.ui.frameSlider.value())
 
     def playPAU(self, frame):
         if self.frames is not None and frame < self.frames.shape[0]:
