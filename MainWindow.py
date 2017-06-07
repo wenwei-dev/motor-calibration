@@ -12,6 +12,10 @@ from MotorValueEditor import MotorValueEditor
 from collections import OrderedDict
 import subprocess
 from blender import SHAPE_KEYS
+import pandas as pd
+from configs import Configs
+from mappers import DefaultMapper
+import traceback
 
 logger = logging.getLogger(__name__)
 
@@ -63,12 +67,19 @@ class MainWindow(QtGui.QMainWindow):
         self.blender_thread.start()
         self.ui.pauTableWidget.setRowCount(len(SHAPE_KEYS))
         self.ui.pauTableWidget.setColumnCount(2)
+        self.ui.pauValueTableWidget.setRowCount(len(SHAPE_KEYS))
+        self.ui.pauValueTableWidget.setColumnCount(2)
+        self.ui.frameSlider.valueChanged.connect(self.playPAU)
 
+        self.frames = None
         self.motor_value_thread = threading.Thread(target=self.readMotorValues)
         self.motor_value_thread.daemon = True
         self.motor_value_thread.start()
 
-        self.load_motor_settings('/home/wenwei/workspace/hansonrobotics/motor-controller/motors_settings.yaml')
+        self.motor_configs = None
+
+        self.load_motor_settings('/home/wenwei/workspace/hansonrobotics/motor-controller/data/motors_settings.yaml')
+        self.load_frames('/home/wenwei/workspace/hansonrobotics/motor-controller/data/shkey_frame_data.csv')
 
     def init_menu(self):
         self.treeMenu = QtGui.QMenu(self.ui.treeView)
@@ -79,6 +90,7 @@ class MainWindow(QtGui.QMainWindow):
         self.ui.saveButton.clicked.connect(self.saveMotors)
         self.ui.resetButton.clicked.connect(self.resetMotors)
         self.ui.neutralButton.clicked.connect(self.neutralMotors)
+        self.ui.loadFrameButton.clicked.connect(self.load_frame_dialog)
 
     def close(self):
         super(MainWindow, self).close()
@@ -92,6 +104,11 @@ class MainWindow(QtGui.QMainWindow):
         dialog = QtGui.QFileDialog(self, filter='*.yaml')
         dialog.show()
         dialog.fileSelected.connect(self.save_motor_settings)
+
+    def load_frame_dialog(self):
+        dialog = QtGui.QFileDialog(self, filter='*.csv')
+        dialog.show()
+        dialog.fileSelected.connect(self.load_frames)
 
     def saveMotors(self):
         for motor in self.getCurrentMotors():
@@ -196,7 +213,7 @@ class MainWindow(QtGui.QMainWindow):
         with open(filename) as f:
             motors = yaml.load(f)
             for motor in motors:
-                motor['device'] = motor['topic']
+                motor['device'] = motor.get('topic')
                 saved_motor = {'saved_{}'.format(k): v for k, v in motor.items()}
                 motor.update(saved_motor)
             self.app.motors = motors
@@ -213,6 +230,12 @@ class MainWindow(QtGui.QMainWindow):
                 value_item = QtGui.QTableWidgetItem()
                 value_item.setData(QtCore.Qt.DisplayRole, -1)
                 self.ui.motorTableWidget.setItem(row, 1, value_item)
+
+            self.motor_configs = Configs()
+            self.motor_configs.parseMotors(motors)
+
+            self.ui.motorValueTableWidget.setRowCount(len(motors))
+            self.ui.motorValueTableWidget.setColumnCount(2)
 
     def save_motor_settings(self, filename):
         filename = str(filename)
@@ -305,3 +328,68 @@ class MainWindow(QtGui.QMainWindow):
 
     def closeEvent(self, event):
         os.killpg(self.blender_proc.pid, 2)
+
+    def load_frames(self, filename):
+        self.frames = pd.read_csv(filename)
+        self.ui.frameSlider.setEnabled(True)
+        self.ui.frameSlider.setMinimum(0)
+        self.ui.frameSlider.setMaximum(self.frames.shape[0])
+        if self.frames.shape[1] != len(SHAPE_KEYS):
+            logger.error("Frame data dimision is incorrect")
+        if self.frames.shape[0] > 0:
+            self.ui.frameSlider.setValue(0)
+
+    def playPAU(self, frame):
+        if self.frames is not None and frame < self.frames.shape[0]:
+            self.ui.frameLabel.setText(str(frame))
+            m_coeffs = self.frames.loc[frame]
+
+            # Update table
+            for row, (key, value) in enumerate(m_coeffs.iteritems()):
+                key_item = self.ui.pauValueTableWidget.item(row, 0)
+                if key_item is None:
+                    key_item = QtGui.QTableWidgetItem(key)
+                    self.ui.pauValueTableWidget.setItem(row, 0, key_item)
+                else:
+                    key_item.setText(key)
+                value_item = self.ui.pauValueTableWidget.item(row, 1)
+                value = value.item()
+                if value_item is None:
+                    value_item = QtGui.QTableWidgetItem()
+                    value_item.setData(QtCore.Qt.DisplayRole, value)
+                    self.ui.pauValueTableWidget.setItem(row, 1, value_item)
+                else:
+                    value_item.setData(QtCore.Qt.DisplayRole, value)
+
+            if self.motor_configs is not None:
+                for row, motor in enumerate(self.motor_configs.motors):
+                    mapper = None
+                    try:
+                        mapper = DefaultMapper(motor)
+                    except Exception as ex:
+                        logger.debug("Can't initilize mapper for motor {}, error {}".format(motor['name'], ex))
+                    if mapper is not None:
+                        try:
+                            value = mapper.map({'m_coeffs':m_coeffs})
+                            value = value.item()
+                        except Exception as ex:
+                            logger.debug("Motor {} has no key {}".format(motor['name'], ex))
+                            value = -1
+                    else:
+                        value = -1
+
+                    key_item = self.ui.motorValueTableWidget.item(row, 0)
+                    if key_item is None:
+                        key_item = QtGui.QTableWidgetItem(motor['name'])
+                        self.ui.motorValueTableWidget.setItem(row, 0, key_item)
+                    else:
+                        key_item.setText(motor['name'])
+                    value_item = self.ui.motorValueTableWidget.item(row, 1)
+                    if value_item is None:
+                        value_item = QtGui.QTableWidgetItem()
+                        value_item.setData(QtCore.Qt.DisplayRole, value)
+                        self.ui.motorValueTableWidget.setItem(row, 1, value_item)
+                    else:
+                        value_item.setData(QtCore.Qt.DisplayRole, value)
+            else:
+                logger.error("No motor configs")
