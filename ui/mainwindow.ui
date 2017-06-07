@@ -84,6 +84,13 @@
                </property>
               </spacer>
              </item>
+             <item>
+              <widget class="QCheckBox" name="enableConfigMotorsCheckBox">
+               <property name="text">
+                <string>Enable Motors</string>
+               </property>
+              </widget>
+             </item>
             </layout>
            </item>
            <item>
@@ -273,6 +280,9 @@
                <property name="alternatingRowColors">
                 <bool>true</bool>
                </property>
+               <attribute name="horizontalHeaderShowSortIndicator" stdset="0">
+                <bool>false</bool>
+               </attribute>
                <attribute name="horizontalHeaderStretchLastSection">
                 <bool>true</bool>
                </attribute>
@@ -287,6 +297,11 @@
                <column>
                 <property name="text">
                  <string>Value</string>
+                </property>
+               </column>
+               <column>
+                <property name="text">
+                 <string>Editor</string>
                 </property>
                </column>
               </widget>

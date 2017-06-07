@@ -74,11 +74,43 @@ class MainWindow(QtGui.QMainWindow):
         self.motor_value_thread = threading.Thread(target=self.readMotorValues)
         self.motor_value_thread.daemon = True
         self.motor_value_thread.start()
+        self.show_motor_value_thread = threading.Thread(target=self.showMotorValues)
+        self.show_motor_value_thread.daemon = True
+        self.show_motor_value_thread.start()
 
         self.motor_configs = None
 
-        self.load_motor_settings('/home/wenwei/workspace/hansonrobotics/motor-controller/data/motors_settings.yaml')
+        self.playMotorCheckState = QtCore.Qt.Unchecked
+        self.calibMotorCheckState = QtCore.Qt.Unchecked
+        self.configMotorCheckState = QtCore.Qt.Unchecked
+        self.ui.enableCalibMotorsCheckBox.stateChanged.connect(self.enableCalibMotors)
+        self.ui.enableConfigMotorsCheckBox.stateChanged.connect(self.enableConfigMotors)
+        self.ui.enablePlayMotorsCheckBox.stateChanged.connect(self.enablePlayMotors)
+
+        self.load_motor_settings('/home/wenwei/workspace/hansonrobotics/motor-controller/motors_settings.yaml')
         self.load_frames('/home/wenwei/workspace/hansonrobotics/motor-controller/data/shkey_frame_data.csv')
+
+    def enableCalibMotors(self, state):
+        self.calibMotorCheckState = state
+        for row in range(self.ui.motorValueCalibTableWidget.rowCount()):
+            widget = self.ui.motorValueCalibTableWidget.cellWidget(row, 2)
+            if widget:
+                widget.ui.enableCheckBox.setCheckState(self.calibMotorCheckState)
+
+    def enableConfigMotors(self, state):
+        self.configMotorCheckState = state
+        header = self.motor_header.keys()
+        for row in range(self.ui.motorConfigTableWidget.rowCount()):
+            widget = self.ui.motorConfigTableWidget.cellWidget(row, len(header))
+            if widget:
+                widget.ui.enableCheckBox.setCheckState(self.configMotorCheckState)
+
+    def enablePlayMotors(self, state):
+        self.playMotorCheckState = state
+        for row in range(self.ui.motorValueTableWidget.rowCount()):
+            widget = self.ui.motorValueTableWidget.cellWidget(row, 2)
+            if widget:
+                widget.ui.enableCheckBox.setCheckState(self.playMotorCheckState)
 
     def init_menu(self):
         self.treeMenu = QtGui.QMenu(self.ui.treeView)
@@ -188,22 +220,26 @@ class MainWindow(QtGui.QMainWindow):
 
             widget = MotorValueEditor(self.ui.motorConfigTableWidget, motor, row)
             self.ui.motorConfigTableWidget.setCellWidget(row, len(header), widget)
+            widget.ui.enableCheckBox.setCheckState(self.configMotorCheckState)
             widget.setVisible(False)
         self.neutralMotors()
-
 
         # Update motor value table widget
         for col in reversed(range(self.ui.motorValueTableWidget.columnCount())):
             self.ui.motorValueTableWidget.removeColumn(col)
 
         self.ui.motorValueTableWidget.setRowCount(len(motors))
-        self.ui.motorValueTableWidget.setColumnCount(2)
+        self.ui.motorValueTableWidget.setColumnCount(3)
         for row, motor in enumerate(motors):
             key_item = QtGui.QTableWidgetItem(motor['name'])
             self.ui.motorValueTableWidget.setItem(row, 0, key_item)
             value_item = QtGui.QTableWidgetItem()
             value_item.setData(QtCore.Qt.DisplayRole, -1)
             self.ui.motorValueTableWidget.setItem(row, 1, value_item)
+            widget = MotorValueEditor(self.ui.motorValueTableWidget, motor, row, False)
+            self.ui.motorValueTableWidget.setCellWidget(row, 2, widget)
+            widget.ui.enableCheckBox.setCheckState(self.playMotorCheckState)
+            widget.setVisible(False)
 
 
         # Update motor value calibration table widget
@@ -220,6 +256,7 @@ class MainWindow(QtGui.QMainWindow):
             self.ui.motorValueCalibTableWidget.setItem(row, 1, value_item)
             widget = MotorValueEditor(self.ui.motorValueCalibTableWidget, motor, row, False)
             self.ui.motorValueCalibTableWidget.setCellWidget(row, 2, widget)
+            widget.ui.enableCheckBox.setCheckState(self.calibMotorCheckState)
             widget.setVisible(False)
 
         self.playPAU(self.ui.frameSlider.value())
@@ -345,13 +382,20 @@ class MainWindow(QtGui.QMainWindow):
                 controller = self.app.motor_controllers.get(device)
                 if controller is not None:
                     position = controller.getPosition(motor['motor_id'])
-                    item = self.ui.motorTableWidget.findItems(
-                        motor['name'], QtCore.Qt.MatchExactly)
-                    if item:
-                        motor_item = item[0]
-                        row = motor_item.row()
-                        value_item = self.ui.motorTableWidget.item(row, 1)
-                        value_item.setData(QtCore.Qt.DisplayRole, position)
+                    motor['current_pos'] = position
+            time.sleep(0.1)
+
+    def showMotorValues(self):
+        while True:
+            for motor in self.app.motors:
+                item = self.ui.motorTableWidget.findItems(
+                    motor['name'], QtCore.Qt.MatchExactly)
+                position = motor.get('current_pos')
+                if position is not None and item is not None:
+                    motor_item = item[0]
+                    row = motor_item.row()
+                    value_item = self.ui.motorTableWidget.item(row, 1)
+                    value_item.setData(QtCore.Qt.DisplayRole, position)
             time.sleep(0.1)
 
     def closeEvent(self, event):
@@ -414,6 +458,9 @@ class MainWindow(QtGui.QMainWindow):
                         row = motor_item.row()
                         value_item = self.ui.motorValueTableWidget.item(row, 1)
                         value_item.setData(QtCore.Qt.DisplayRole, value)
+                        widget = self.ui.motorValueTableWidget.cellWidget(row, 2)
+                        if widget:
+                            widget.ui.motorValueDoubleSpinBox.setValue(value)
 
                     item = self.ui.motorValueCalibTableWidget.findItems(
                         motor['name'], QtCore.Qt.MatchExactly)

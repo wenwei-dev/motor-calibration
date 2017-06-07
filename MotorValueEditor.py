@@ -28,7 +28,7 @@ class MotorValueEditor(QtGui.QWidget):
         self.ui.motorValueDoubleSpinBox.installEventFilter(self)
         self.ui.enableCheckBox.toggled.connect(self.enableMotor)
 
-        self.update = False
+        self.update = True
         self.stopped = False
         self.polljob = threading.Thread(target=self.poll)
         self.polljob.daemon = True

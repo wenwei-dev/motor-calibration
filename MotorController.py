@@ -5,6 +5,7 @@ import logging
 import time
 import os
 import traceback
+import serial
 
 logger = logging.getLogger(__name__)
 
@@ -68,6 +69,8 @@ class MotorController(object):
                             channel.position = self.controller.getPosition(channel.id)/4.0
                             channel.valid = True
                         except IndexError:
+                            channel.valid = False
+                        except serial.SerialException as ex:
                             channel.valid = False
                         except Exception as ex:
                             channel.valid = False

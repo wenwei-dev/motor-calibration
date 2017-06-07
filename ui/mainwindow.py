@@ -2,7 +2,7 @@
 
 # Form implementation generated from reading ui file 'ui/mainwindow.ui'
 #
-# Created: Wed Jun  7 16:47:00 2017
+# Created: Wed Jun  7 17:18:37 2017
 #      by: PyQt4 UI code generator 4.10.4
 #
 # WARNING! All changes made in this file will be lost!
@@ -67,6 +67,9 @@ class Ui_MainWindow(object):
         self.horizontalLayout_2.addWidget(self.neutralButton)
         spacerItem = QtGui.QSpacerItem(40, 20, QtGui.QSizePolicy.Expanding, QtGui.QSizePolicy.Minimum)
         self.horizontalLayout_2.addItem(spacerItem)
+        self.enableConfigMotorsCheckBox = QtGui.QCheckBox(self.frame)
+        self.enableConfigMotorsCheckBox.setObjectName(_fromUtf8("enableConfigMotorsCheckBox"))
+        self.horizontalLayout_2.addWidget(self.enableConfigMotorsCheckBox)
         self.verticalLayout_2.addLayout(self.horizontalLayout_2)
         self.motorConfigTableWidget = QtGui.QTableWidget(self.frame)
         self.motorConfigTableWidget.setLineWidth(0)
@@ -292,6 +295,7 @@ class Ui_MainWindow(object):
         self.saveButton.setText(_translate("MainWindow", "Save", None))
         self.resetButton.setText(_translate("MainWindow", "Reset", None))
         self.neutralButton.setText(_translate("MainWindow", "Neutral", None))
+        self.enableConfigMotorsCheckBox.setText(_translate("MainWindow", "Enable Motors", None))
         self.motorConfigTableWidget.setSortingEnabled(True)
         self.playPAUWidget.setTabText(self.playPAUWidget.indexOf(self.tab), _translate("MainWindow", "Config", None))
         self.loadFrameButton.setText(_translate("MainWindow", "Load Frames", None))
