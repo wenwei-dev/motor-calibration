@@ -543,7 +543,9 @@ class MainWindow(QtGui.QMainWindow):
     def trainModel(self):
         self.training = True
         self.ui.trainButton.setEnabled(not self.training)
-        threading.Thread(target=self._trainModel).start()
+        thread = threading.Thread(target=self._trainModel)
+        thread.daemon = True
+        thread.start()
 
     def _trainModel(self):
         pool = Pool(6)

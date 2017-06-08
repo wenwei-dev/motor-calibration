@@ -3,8 +3,11 @@ import pandas as pd
 import numpy as np
 import os
 import yaml
+import logging
 
 ALL_SHAPEKEYS = 'brow_center_DN,brow_center_UP,brow_inner_DN.L,brow_inner_DN.R,brow_inner_UP.L,brow_inner_UP.R,brow_outer_DN.L,brow_outer_DN.R,brow_outer_UP.L,brow_outer_up.R,eye-blink.LO.L,eye-blink.LO.R,eye-blink.UP.L,eye-blink.UP.R,eye-flare.LO.L,eye-flare.LO.R,eye-flare.UP.L,eye-flare.UP.R,eyes-look.dn,eyes-look.up,jaw,lip-DN.C.DN,lip-DN.C.UP,lip-DN.L.DN,lip-DN.L.UP,lip-DN.R.DN,lip-JAW.DN,lip-UP.C.DN,lip-UP.C.UP,lip-UP.L.DN,lip-UP.L.UP,lip-UP.R.DN,lip-UP.R.UP,lip.DN.R.UP,lips-frown.L,lips-frown.R,lips-narrow.L,lips-narrow.R,lips-smile.L,lips-smile.R,lips-wide.L,lips-wide.R,sneer.L,sneer.R,wince.L,wince.R'.split(',')
+
+logger = logging.getLogger(__name__)
 
 def softmax(x):
     """Compute softmax values for each sets of scores in x."""
@@ -31,7 +34,7 @@ def find_params(shapekey_values, targets):
         raise Exception('No data to train')
     res = minimize(
         fun, [0.1]*param_num+[0], args=(shapekey_values, targets),
-        method='L-BFGS-B', tol=1e-15, options={'disp': True}, bounds=bounds)
+        method='L-BFGS-B', tol=1e-15, options={'disp': False}, bounds=bounds)
     return res
 
 def run(motor_config_file, pau_data_file, motor_data_file, model_file):
@@ -47,7 +50,7 @@ def run(motor_config_file, pau_data_file, motor_data_file, model_file):
         try:
             motor = [motor for motor in motor_configs if motor['name'] == motor_name][0]
         except Exception as ex:
-            print 'Motor is not found in configs'.format(motor_name)
+            logger.warn('Motor is not found in configs'.format(motor_name))
             continue
 
         targets = motor_data[motor['name']]
@@ -68,6 +71,10 @@ def trainMotor(motor, targets, frames):
     pau_values = frames[ALL_SHAPEKEYS]
     try:
         res = find_params(pau_values, norm_targets)
+        if res.success:
+            logger.info("Training {} Success, {}".format(motor_name, res.message))
+        else:
+            logger.warn("Trainig {} Fail, {}".format(motor_name, res.message))
         return res.x
     except Exception as ex:
         pass
