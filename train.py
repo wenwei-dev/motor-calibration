@@ -4,6 +4,7 @@ import numpy as np
 import os
 import yaml
 import logging
+import traceback
 
 ALL_SHAPEKEYS = 'brow_center_DN,brow_center_UP,brow_inner_DN.L,brow_inner_DN.R,brow_inner_UP.L,brow_inner_UP.R,brow_outer_DN.L,brow_outer_DN.R,brow_outer_UP.L,brow_outer_up.R,eye-blink.LO.L,eye-blink.LO.R,eye-blink.UP.L,eye-blink.UP.R,eye-flare.LO.L,eye-flare.LO.R,eye-flare.UP.L,eye-flare.UP.R,eyes-look.dn,eyes-look.up,jaw,lip-DN.C.DN,lip-DN.C.UP,lip-DN.L.DN,lip-DN.L.UP,lip-DN.R.DN,lip-JAW.DN,lip-UP.C.DN,lip-UP.C.UP,lip-UP.L.DN,lip-UP.L.UP,lip-UP.R.DN,lip-UP.R.UP,lip.DN.R.UP,lips-frown.L,lips-frown.R,lips-narrow.L,lips-narrow.R,lips-smile.L,lips-smile.R,lips-wide.L,lips-wide.R,sneer.L,sneer.R,wince.L,wince.R'.split(',')
 
@@ -60,9 +61,10 @@ def run(motor_config_file, pau_data_file, motor_data_file, model_file):
         try:
             res = find_params(pau_values[shapekeys], norm_targets)
             params_df[motor_name] = res.x
-            plot_params(motor_name, pau_values[shapekeys], res.x, norm_targets)
+            plot_params(motor, pau_values[shapekeys], res.x, targets)
         except Exception as ex:
             logger.warn(ex)
+            logger.warn(traceback.format_exc())
             continue
     params_df.to_csv(model_file)
 
@@ -73,7 +75,7 @@ def trainMotor(motor, targets, frames):
     pau_values = frames[ALL_SHAPEKEYS]
     try:
         res = find_params(pau_values, norm_targets)
-        plot_params(motor_name, pau_values, res.x, norm_targets)
+        plot_params(motor, pau_values, res.x, targets)
         if res.success:
             logger.info("Training {} Success, {}".format(motor_name, res.message))
         else:
@@ -82,13 +84,13 @@ def trainMotor(motor, targets, frames):
     except Exception as ex:
         pass
 
-def plot_params(motor_name, shapekey_values, x, targets):
+def plot_params(motor, shapekey_values, x, targets):
     import matplotlib.pyplot as plt
     param_num = shapekey_values.shape[1]
 
     sum = x[:param_num]*shapekey_values + x[-1]
     values = sum.sum(axis=1)
-    #values = values*(motor['max'] - motor['min'])+motor['init']
+    values = values*(motor['max']-motor['min'])+motor['init']
 
     error = targets-values
     #print error
@@ -99,7 +101,7 @@ def plot_params(motor_name, shapekey_values, x, targets):
     ax.plot(targets.index, targets, 'ro', label='targets')
     ax.plot(values.index, values, 'b+', label='evaluates')
     ax.legend(loc='lower right')
-    fig_fname = '{}.png'.format(os.path.join('figs', motor_name))
+    fig_fname = '{}.png'.format(os.path.join('figs', motor['name']))
     if not os.path.isdir(os.path.dirname(fig_fname)):
         os.makedirs(os.path.dirname(fig_fname))
     fig.savefig(fig_fname)
@@ -107,6 +109,7 @@ def plot_params(motor_name, shapekey_values, x, targets):
     logger.info("Saved fig to {}".format(fig_fname))
 
 if __name__ == '__main__':
+    logging.basicConfig(level=logging.INFO)
     import argparse
     parser = argparse.ArgumentParser()
     parser.add_argument('-m, --motor-config-file', dest='motor_config_file', required=True)
