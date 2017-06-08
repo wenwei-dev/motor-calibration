@@ -363,7 +363,11 @@ class MainWindow(QtGui.QMainWindow):
 
     def readPAU(self, f):
         for line in iter(f.readline, ''):
-            coeffs = eval(line)
+            try:
+                coeffs = eval(line)
+            except Exception as ex:
+                logger.warn("Read PAU error {}".format(ex))
+                continue
             for row, (key, value) in enumerate(zip(SHAPE_KEYS, coeffs)):
                 key_item = self.ui.pauTableWidget.item(row, 0)
                 if key_item is None:
