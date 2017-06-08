@@ -45,6 +45,10 @@ class TrainedMapper(BaseMapper):
     def set_model(self, model_df):
         self.model_df = model_df
 
+    def angle2pulse(self, angle):
+        pos = angle*(self.motor_entry['pulse_max']-self.motor_entry['pulse_min'])+self.motor_entry['init']
+        return pos
+
     def map(self, msg):
         coeff = msg['m_coeffs'][self.model_df.index[:-1]]
         param_num = len(coeff)

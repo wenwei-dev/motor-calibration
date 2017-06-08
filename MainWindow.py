@@ -416,6 +416,9 @@ class MainWindow(QtGui.QMainWindow):
             os.path.splitext(self.frame_filename)[0])
         self.model_file = '{}-model.csv'.format(
             os.path.splitext(self.frame_filename)[0])
+        if os.path.isfile(self.model_file):
+            self.model_df = pd.read_csv(self.model_file, index_col=0)
+            logger.info("Load model file {}".format(self.model_file))
 
         self.ui.frameSlider.setEnabled(True)
         self.ui.frameSlider.setMinimum(0)
