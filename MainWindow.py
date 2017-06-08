@@ -92,6 +92,7 @@ class MainWindow(QtGui.QMainWindow):
         self.button_group.addButton(self.ui.defaultMapperButton)
         self.button_group.addButton(self.ui.trainedMapperButton)
         self.ui.saveMotorValuesButton.clicked.connect(self.saveMotorValues)
+        self.ui.trainButton.clicked.connect(self.trainModel)
 
         self.load_motor_settings('/home/wenwei/workspace/hansonrobotics/motor-controller/motors_settings.yaml')
         self.load_frames('/home/wenwei/workspace/hansonrobotics/motor-controller/data/shkey_frame_data.csv')
@@ -236,6 +237,7 @@ class MainWindow(QtGui.QMainWindow):
 
         self.ui.motorValueTableWidget.setRowCount(len(motors))
         self.ui.motorValueTableWidget.setColumnCount(3)
+        self.ui.motorValueTableWidget.setHorizontalHeaderLabels('Motor Name,Target,Editor'.split(','))
         for row, motor in enumerate(motors):
             key_item = QtGui.QTableWidgetItem(motor['name'])
             self.ui.motorValueTableWidget.setItem(row, 0, key_item)
@@ -254,6 +256,7 @@ class MainWindow(QtGui.QMainWindow):
 
         self.ui.motorValueCalibTableWidget.setRowCount(len(motors))
         self.ui.motorValueCalibTableWidget.setColumnCount(3)
+        self.ui.motorValueCalibTableWidget.setHorizontalHeaderLabels('Motor Name,Target,Editor'.split(','))
         for row, motor in enumerate(motors):
             key_item = QtGui.QTableWidgetItem(motor['name'])
             self.ui.motorValueCalibTableWidget.setItem(row, 0, key_item)
@@ -497,14 +500,10 @@ class MainWindow(QtGui.QMainWindow):
                 names = [motor['name'] for motor in self.app.motors]
                 df = pd.DataFrame(np.nan, index=np.arange(total_frames), columns=names)
                 df.to_csv(filename, index=False)
-
             df = pd.read_csv(filename)
-            print df
             motor_positions = [motor.get('current_pos', np.nan) for motor in self.app.motors]
             df.loc[frame] = motor_positions
-            print motor_positions
-            print filename
-            print df
             df.to_csv(filename, index=False)
-        else:
-            print frame, total_frames
+
+    def trainModel(self):
+        pass

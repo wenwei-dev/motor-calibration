@@ -2,7 +2,7 @@
 
 # Form implementation generated from reading ui file 'ui/mainwindow.ui'
 #
-# Created: Wed Jun  7 19:20:22 2017
+# Created: Wed Jun  7 20:42:48 2017
 #      by: PyQt4 UI code generator 4.10.4
 #
 # WARNING! All changes made in this file will be lost!
@@ -160,6 +160,9 @@ class Ui_MainWindow(object):
         self.saveMotorValuesButton = QtGui.QPushButton(self.tab_3)
         self.saveMotorValuesButton.setObjectName(_fromUtf8("saveMotorValuesButton"))
         self.horizontalLayout_6.addWidget(self.saveMotorValuesButton)
+        self.trainButton = QtGui.QPushButton(self.tab_3)
+        self.trainButton.setObjectName(_fromUtf8("trainButton"))
+        self.horizontalLayout_6.addWidget(self.trainButton)
         self.enablePlayMotorsCheckBox = QtGui.QCheckBox(self.tab_3)
         self.enablePlayMotorsCheckBox.setObjectName(_fromUtf8("enablePlayMotorsCheckBox"))
         self.horizontalLayout_6.addWidget(self.enablePlayMotorsCheckBox)
@@ -313,6 +316,7 @@ class Ui_MainWindow(object):
         self.defaultMapperButton.setText(_translate("MainWindow", "Default Mapper", None))
         self.trainedMapperButton.setText(_translate("MainWindow", "Trained Mapper", None))
         self.saveMotorValuesButton.setText(_translate("MainWindow", "Save Motor Values", None))
+        self.trainButton.setText(_translate("MainWindow", "Train", None))
         self.enablePlayMotorsCheckBox.setText(_translate("MainWindow", "Enable Motors", None))
         item = self.motorValueTableWidget.horizontalHeaderItem(0)
         item.setText(_translate("MainWindow", "Motor Name", None))

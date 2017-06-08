@@ -270,6 +270,13 @@
                 </widget>
                </item>
                <item>
+                <widget class="QPushButton" name="trainButton">
+                 <property name="text">
+                  <string>Train</string>
+                 </property>
+                </widget>
+               </item>
+               <item>
                 <widget class="QCheckBox" name="enablePlayMotorsCheckBox">
                  <property name="text">
                   <string>Enable Motors</string>
