@@ -93,14 +93,21 @@ def plot_params(motor, shapekey_values, x, targets):
     values = values*(motor['max']-motor['min'])+motor['init']
 
     error = targets-values
-    #print error
-    #print 'mse', (error**2).sum()
+    mse = (error**2).sum()
 
     fig, ax = plt.subplots()
+    ax.set_title('Motor Name {}, MSE {}'.format(motor['name'], mse))
+    ax.set_xlabel('Frame')
+    ax.set_ylabel('Motor Value')
     targets = targets.dropna()
-    ax.plot(targets.index, targets, 'ro', label='targets')
-    ax.plot(values.index, values, 'b+', label='evaluates')
-    ax.legend(loc='lower right')
+    ax.plot(values.index+1, values, 'bo', label='evaluates', alpha=0.6, ms=3)
+    ax.plot(targets.index+1, targets, 'ro', label='targets', alpha=0.6, ms=6)
+    ax.vlines(targets.index+1, [0], targets, linestyles='dotted')
+    ax.set_xlim(values.index.min()-10, values.index.max()+10)
+    ax.set_ylim(values.min()-100, values.max()+100)
+    plt.xticks(targets.index+1, targets.index+1)
+
+    ax.legend(loc='best', fancybox=True, framealpha=0.5)
     fig_fname = '{}.png'.format(os.path.join('figs', motor['name']))
     if not os.path.isdir(os.path.dirname(fig_fname)):
         os.makedirs(os.path.dirname(fig_fname))
