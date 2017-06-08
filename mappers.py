@@ -42,14 +42,13 @@ class TrainedMapper(BaseMapper):
     def __init__(self, motor_entry):
         super(TrainedMapper, self).__init__(motor_entry)
 
-    def set_model(self, model):
-        self.model = model
-        self.params_df = pd.read_csv(self.model, index_col=0)
+    def set_model(self, model_df):
+        self.model_df = model_df
 
     def map(self, msg):
-        coeff = msg['m_coeffs'][self.params_df.index[:-1]]
+        coeff = msg['m_coeffs'][self.model_df.index[:-1]]
         param_num = len(coeff)
-        x = self.params_df[self.motor_entry['name']]
+        x = self.model_df[self.motor_entry['name']]
         sum = x[:param_num]*coeff + x[-1]
         angle = sum.sum()
         pos = self.angle2pulse(angle)

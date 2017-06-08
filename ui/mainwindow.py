@@ -2,7 +2,7 @@
 
 # Form implementation generated from reading ui file 'ui/mainwindow.ui'
 #
-# Created: Thu Jun  8 11:01:32 2017
+# Created: Thu Jun  8 11:26:58 2017
 #      by: PyQt4 UI code generator 4.10.4
 #
 # WARNING! All changes made in this file will be lost!
@@ -96,7 +96,7 @@ class Ui_MainWindow(object):
         self.horizontalLayout.addWidget(self.loadFrameButton)
         self.frameSlider = QtGui.QSlider(self.tab_2)
         self.frameSlider.setEnabled(False)
-        self.frameSlider.setPageStep(1)
+        self.frameSlider.setPageStep(10)
         self.frameSlider.setOrientation(QtCore.Qt.Horizontal)
         self.frameSlider.setObjectName(_fromUtf8("frameSlider"))
         self.horizontalLayout.addWidget(self.frameSlider)
@@ -128,9 +128,6 @@ class Ui_MainWindow(object):
         self.verticalLayout_4.addLayout(self.horizontalLayout_3)
         self.gridLayout = QtGui.QGridLayout()
         self.gridLayout.setObjectName(_fromUtf8("gridLayout"))
-        self.label = QtGui.QLabel(self.frame_2)
-        self.label.setObjectName(_fromUtf8("label"))
-        self.gridLayout.addWidget(self.label, 0, 0, 1, 1)
         self.pauValueTableWidget = QtGui.QTableWidget(self.frame_2)
         self.pauValueTableWidget.setEditTriggers(QtGui.QAbstractItemView.NoEditTriggers)
         self.pauValueTableWidget.setAlternatingRowColors(True)
@@ -142,7 +139,7 @@ class Ui_MainWindow(object):
         item = QtGui.QTableWidgetItem()
         self.pauValueTableWidget.setHorizontalHeaderItem(1, item)
         self.pauValueTableWidget.horizontalHeader().setStretchLastSection(True)
-        self.gridLayout.addWidget(self.pauValueTableWidget, 2, 0, 1, 1)
+        self.gridLayout.addWidget(self.pauValueTableWidget, 3, 0, 1, 1)
         self.savedMotorValueTableWidget = QtGui.QTableWidget(self.frame_2)
         self.savedMotorValueTableWidget.setAlternatingRowColors(True)
         self.savedMotorValueTableWidget.setObjectName(_fromUtf8("savedMotorValueTableWidget"))
@@ -153,10 +150,14 @@ class Ui_MainWindow(object):
         item = QtGui.QTableWidgetItem()
         self.savedMotorValueTableWidget.setHorizontalHeaderItem(1, item)
         self.savedMotorValueTableWidget.horizontalHeader().setStretchLastSection(True)
-        self.gridLayout.addWidget(self.savedMotorValueTableWidget, 2, 1, 1, 1)
-        self.keyFrameCheckBox = QtGui.QCheckBox(self.frame_2)
-        self.keyFrameCheckBox.setObjectName(_fromUtf8("keyFrameCheckBox"))
-        self.gridLayout.addWidget(self.keyFrameCheckBox, 0, 1, 1, 1)
+        self.gridLayout.addWidget(self.savedMotorValueTableWidget, 3, 1, 1, 1)
+        self.keyMotorFrameCheckBox = QtGui.QCheckBox(self.frame_2)
+        self.keyMotorFrameCheckBox.setObjectName(_fromUtf8("keyMotorFrameCheckBox"))
+        self.gridLayout.addWidget(self.keyMotorFrameCheckBox, 0, 1, 1, 1)
+        self.keyShapeFrameCheckBox = QtGui.QCheckBox(self.frame_2)
+        self.keyShapeFrameCheckBox.setEnabled(False)
+        self.keyShapeFrameCheckBox.setObjectName(_fromUtf8("keyShapeFrameCheckBox"))
+        self.gridLayout.addWidget(self.keyShapeFrameCheckBox, 0, 0, 1, 1)
         self.verticalLayout_4.addLayout(self.gridLayout)
         self.frame1 = QtGui.QFrame(self.splitter)
         sizePolicy = QtGui.QSizePolicy(QtGui.QSizePolicy.Expanding, QtGui.QSizePolicy.Expanding)
@@ -302,7 +303,6 @@ class Ui_MainWindow(object):
         self.playPAUWidget.setTabText(self.playPAUWidget.indexOf(self.tab), _translate("MainWindow", "Config", None))
         self.loadFrameButton.setText(_translate("MainWindow", "Load Frames", None))
         self.trainButton.setText(_translate("MainWindow", "Train", None))
-        self.label.setText(_translate("MainWindow", "Shape Key", None))
         item = self.pauValueTableWidget.horizontalHeaderItem(0)
         item.setText(_translate("MainWindow", "Key", None))
         item = self.pauValueTableWidget.horizontalHeaderItem(1)
@@ -311,7 +311,8 @@ class Ui_MainWindow(object):
         item.setText(_translate("MainWindow", "Motor Name", None))
         item = self.savedMotorValueTableWidget.horizontalHeaderItem(1)
         item.setText(_translate("MainWindow", "Target", None))
-        self.keyFrameCheckBox.setText(_translate("MainWindow", "Key Frame", None))
+        self.keyMotorFrameCheckBox.setText(_translate("MainWindow", "Key Frame", None))
+        self.keyShapeFrameCheckBox.setText(_translate("MainWindow", "Key Frame", None))
         self.defaultMapperButton.setText(_translate("MainWindow", "Default Mapper", None))
         self.trainedMapperButton.setText(_translate("MainWindow", "Trained Mapper", None))
         self.saveMotorValuesButton.setText(_translate("MainWindow", "Save Motor Values", None))

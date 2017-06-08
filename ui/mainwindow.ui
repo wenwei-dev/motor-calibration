@@ -146,7 +146,7 @@
              <bool>false</bool>
             </property>
             <property name="pageStep">
-             <number>1</number>
+             <number>10</number>
             </property>
             <property name="orientation">
              <enum>Qt::Horizontal</enum>
@@ -203,14 +203,7 @@
             </item>
             <item>
              <layout class="QGridLayout" name="gridLayout">
-              <item row="0" column="0">
-               <widget class="QLabel" name="label">
-                <property name="text">
-                 <string>Shape Key</string>
-                </property>
-               </widget>
-              </item>
-              <item row="2" column="0">
+              <item row="3" column="0">
                <widget class="QTableWidget" name="pauValueTableWidget">
                 <property name="editTriggers">
                  <set>QAbstractItemView::NoEditTriggers</set>
@@ -233,7 +226,7 @@
                 </column>
                </widget>
               </item>
-              <item row="2" column="1">
+              <item row="3" column="1">
                <widget class="QTableWidget" name="savedMotorValueTableWidget">
                 <property name="alternatingRowColors">
                  <bool>true</bool>
@@ -254,7 +247,17 @@
                </widget>
               </item>
               <item row="0" column="1">
-               <widget class="QCheckBox" name="keyFrameCheckBox">
+               <widget class="QCheckBox" name="keyMotorFrameCheckBox">
+                <property name="text">
+                 <string>Key Frame</string>
+                </property>
+               </widget>
+              </item>
+              <item row="0" column="0">
+               <widget class="QCheckBox" name="keyShapeFrameCheckBox">
+                <property name="enabled">
+                 <bool>false</bool>
+                </property>
                 <property name="text">
                  <string>Key Frame</string>
                 </property>

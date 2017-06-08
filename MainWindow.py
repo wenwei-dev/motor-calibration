@@ -17,6 +17,7 @@ import numpy as np
 from configs import Configs
 from mappers import DefaultMapper, TrainedMapper
 import traceback
+from train import ALL_SHAPEKEYS, find_params
 
 logger = logging.getLogger(__name__)
 
@@ -75,6 +76,9 @@ class MainWindow(QtGui.QMainWindow):
         self.frame_filename = None
         self.motor_value_filename = None
         self.saved_motor_values_df = None
+        self.model_df = pd.DataFrame(index=ALL_SHAPEKEYS+['Const'])
+        self.model_file = 'abc.csv'
+
         self.motor_value_thread = threading.Thread(target=self.readMotorValues)
         self.motor_value_thread.daemon = True
         self.motor_value_thread.start()
@@ -475,7 +479,7 @@ class MainWindow(QtGui.QMainWindow):
                             mapper = DefaultMapper(motor)
                         elif str(self.button_group.checkedButton().text()) == 'Trained Mapper':
                             mapper = TrainedMapper(motor)
-                            mapper.set_model('motor_mapping_model.csv')
+                            mapper.set_model(self.model_df)
                         else:
                             logger.error("No motor mapper for {}".format(motor['name']))
                             continue
@@ -526,5 +530,19 @@ class MainWindow(QtGui.QMainWindow):
                 value_item = self.ui.savedMotorValueTableWidget.item(row, 1)
                 value_item.setText(target)
 
+    def trainMotor(self, motor):
+        motor_name = str(motor['name'])
+        targets = self.saved_motor_values_df[motor_name]
+        norm_targets = (targets - motor['init'])/(motor['max'] - motor['min'])
+        pau_values = self.frames[ALL_SHAPEKEYS]
+        try:
+            res = find_params(pau_values, norm_targets)
+            self.model_df[motor_name] = res.x
+        except Exception as ex:
+            logger.warn("Error in training motor {}, {}".format(motor_name, ex))
+
     def trainModel(self):
-        pass
+        for motor in self.app.motors:
+            self.trainMotor(motor)
+        self.model_df.to_csv(self.model_file)
+        logger.info("Save model to {}".format(self.model_file))
