@@ -37,6 +37,8 @@ class MainWindow(QtGui.QMainWindow):
         self.ui.treeView.setModel(self.tree_model)
         self.ui.treeView.selectionModel().selectionChanged.connect(self.selectMotor)
         self.ui.treeView.customContextMenuRequested.connect(self.onTreeViewContextMenu)
+        self.ui.savedMotorValueTableWidget.customContextMenuRequested.connect(
+            self.onSavedMotorValueTableWidgetContextMenu)
         self.ui.motorConfigTableWidget.cellChanged.connect(self.cellChanged)
 
         self.timer = QtCore.QTimer(self)
@@ -123,7 +125,10 @@ class MainWindow(QtGui.QMainWindow):
     def init_menu(self):
         self.treeMenu = QtGui.QMenu(self.ui.treeView)
         self.treeMenu.addAction(self.ui.actionEditMotors)
+        self.savedMotorValueMenu = QtGui.QMenu(self.ui.savedMotorValueTableWidget)
+        self.savedMotorValueMenu.addAction(self.ui.actionClearMotorValues)
         self.ui.actionEditMotors.triggered.connect(self.editMotors)
+        self.ui.actionClearMotorValues.triggered.connect(self.clearMotorValues)
 
     def init_action(self):
         self.ui.saveButton.clicked.connect(self.saveMotors)
@@ -263,8 +268,12 @@ class MainWindow(QtGui.QMainWindow):
     def onTreeViewContextMenu(self, point):
         index = self.ui.treeView.indexAt(point)
         if index.isValid():
-            global_point = self.ui.treeView.mapToGlobal(point)
+            global_point = self.ui.treeView.viewport().mapToGlobal(point)
             self.treeMenu.exec_(global_point)
+
+    def onSavedMotorValueTableWidgetContextMenu(self, point):
+        global_point = self.ui.savedMotorValueTableWidget.viewport().mapToGlobal(point)
+        self.savedMotorValueMenu.exec_(global_point)
 
     def load_motor_settings(self, filename):
         self.filename = filename
@@ -568,3 +577,26 @@ class MainWindow(QtGui.QMainWindow):
 
         self.training = False
         self.ui.trainButton.setEnabled(not self.training)
+
+
+    def clearMotorValues(self):
+        frame = self.ui.frameSlider.value()
+        total_frames = self.frames.shape[0]
+        if self.frames is not None and frame < total_frames:
+            motor_positions = [np.nan for motor in self.app.motors]
+            self.saved_motor_values_df.loc[frame] = motor_positions
+            self.saved_motor_values_df.to_csv(self.motor_value_filename, index=False)
+
+            # Update Saved motor value
+            for row, motor in enumerate(self.app.motors):
+                motor_name = str(motor['name'])
+                key_item = self.ui.savedMotorValueTableWidget.item(row, 0)
+                key_item.setText(motor_name)
+                try:
+                    target = self.saved_motor_values_df.loc[frame][motor_name]
+                    target = str(target)
+                except Exception as ex:
+                    logger.warn(ex)
+                    target = "nan"
+                value_item = self.ui.savedMotorValueTableWidget.item(row, 1)
+                value_item.setText(target)

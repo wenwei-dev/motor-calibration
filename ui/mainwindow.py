@@ -2,7 +2,7 @@
 
 # Form implementation generated from reading ui file 'ui/mainwindow.ui'
 #
-# Created: Thu Jun  8 11:56:17 2017
+# Created: Thu Jun  8 16:31:51 2017
 #      by: PyQt4 UI code generator 4.10.4
 #
 # WARNING! All changes made in this file will be lost!
@@ -141,6 +141,7 @@ class Ui_MainWindow(object):
         self.pauValueTableWidget.horizontalHeader().setStretchLastSection(True)
         self.gridLayout.addWidget(self.pauValueTableWidget, 3, 0, 1, 1)
         self.savedMotorValueTableWidget = QtGui.QTableWidget(self.frame_2)
+        self.savedMotorValueTableWidget.setContextMenuPolicy(QtCore.Qt.CustomContextMenu)
         self.savedMotorValueTableWidget.setAlternatingRowColors(True)
         self.savedMotorValueTableWidget.setObjectName(_fromUtf8("savedMotorValueTableWidget"))
         self.savedMotorValueTableWidget.setColumnCount(2)
@@ -283,12 +284,14 @@ class Ui_MainWindow(object):
         icon3.addPixmap(QtGui.QPixmap(_fromUtf8(":/icon/open.ico")), QtGui.QIcon.Normal, QtGui.QIcon.Off)
         self.actionLoad_Motor_Settings.setIcon(icon3)
         self.actionLoad_Motor_Settings.setObjectName(_fromUtf8("actionLoad_Motor_Settings"))
+        self.actionClearMotorValues = QtGui.QAction(MainWindow)
+        self.actionClearMotorValues.setObjectName(_fromUtf8("actionClearMotorValues"))
         self.toolBar.addAction(self.actionLoad_Motor_Settings)
         self.toolBar.addAction(self.actionSave_Motor_Settings)
         self.toolBar.addAction(self.actionExit)
 
         self.retranslateUi(MainWindow)
-        self.playPAUWidget.setCurrentIndex(0)
+        self.playPAUWidget.setCurrentIndex(1)
         QtCore.QObject.connect(self.frameSlider, QtCore.SIGNAL(_fromUtf8("valueChanged(int)")), self.frameSpinBox.setValue)
         QtCore.QObject.connect(self.frameSpinBox, QtCore.SIGNAL(_fromUtf8("valueChanged(int)")), self.frameSlider.setValue)
         QtCore.QMetaObject.connectSlotsByName(MainWindow)
@@ -339,5 +342,7 @@ class Ui_MainWindow(object):
         self.actionEditMotors.setToolTip(_translate("MainWindow", "Edit Motors", None))
         self.actionSave_Motor_Settings.setText(_translate("MainWindow", "Save Motor Settings", None))
         self.actionLoad_Motor_Settings.setText(_translate("MainWindow", "Load Motor Settings", None))
+        self.actionClearMotorValues.setText(_translate("MainWindow", "Clear Motor Values", None))
+        self.actionClearMotorValues.setToolTip(_translate("MainWindow", "Clear Motor Values", None))
 
 import res_rc
