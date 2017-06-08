@@ -2,7 +2,7 @@
 
 # Form implementation generated from reading ui file 'ui/mainwindow.ui'
 #
-# Created: Thu Jun  8 11:26:58 2017
+# Created: Thu Jun  8 11:56:17 2017
 #      by: PyQt4 UI code generator 4.10.4
 #
 # WARNING! All changes made in this file will be lost!
@@ -323,7 +323,7 @@ class Ui_MainWindow(object):
         item.setText(_translate("MainWindow", "Value", None))
         item = self.motorValueTableWidget.horizontalHeaderItem(2)
         item.setText(_translate("MainWindow", "Editor", None))
-        self.playPAUWidget.setTabText(self.playPAUWidget.indexOf(self.tab_2), _translate("MainWindow", "Play PAU", None))
+        self.playPAUWidget.setTabText(self.playPAUWidget.indexOf(self.tab_2), _translate("MainWindow", "Calibration", None))
         item = self.pauTableWidget.horizontalHeaderItem(0)
         item.setText(_translate("MainWindow", "Key", None))
         item = self.pauTableWidget.horizontalHeaderItem(1)

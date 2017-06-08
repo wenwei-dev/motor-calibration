@@ -3,6 +3,7 @@ import logging
 import yaml
 import threading
 from multiprocessing.dummy import Pool as ThreadPool
+from multiprocessing import Pool
 import time
 from PyQt4 import QtCore
 from PyQt4 import QtGui
@@ -17,7 +18,8 @@ import numpy as np
 from configs import Configs
 from mappers import DefaultMapper, TrainedMapper
 import traceback
-from train import ALL_SHAPEKEYS, find_params
+from train import ALL_SHAPEKEYS, find_params, trainMotor
+from functools import partial
 
 logger = logging.getLogger(__name__)
 
@@ -530,19 +532,17 @@ class MainWindow(QtGui.QMainWindow):
                 value_item = self.ui.savedMotorValueTableWidget.item(row, 1)
                 value_item.setText(target)
 
-    def trainMotor(self, motor):
-        motor_name = str(motor['name'])
-        targets = self.saved_motor_values_df[motor_name]
-        norm_targets = (targets - motor['init'])/(motor['max'] - motor['min'])
-        pau_values = self.frames[ALL_SHAPEKEYS]
-        try:
-            res = find_params(pau_values, norm_targets)
-            self.model_df[motor_name] = res.x
-        except Exception as ex:
-            logger.warn("Error in training motor {}, {}".format(motor_name, ex))
-
     def trainModel(self):
-        for motor in self.app.motors:
-            self.trainMotor(motor)
+        pool = Pool(6)
+        params = pool.map(
+            partial(trainMotor, targets=self.saved_motor_values_df, frames=self.frames),
+            self.app.motors)
+        pool.close()
+        pool.join()
+
+        for motor, x in zip(self.app.motors, params):
+            if x is not None:
+                motor_name = str(motor['name'])
+                self.model_df[motor_name] = x
         self.model_df.to_csv(self.model_file)
         logger.info("Save model to {}".format(self.model_file))

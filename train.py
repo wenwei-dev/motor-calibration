@@ -62,6 +62,17 @@ def run(motor_config_file, pau_data_file, motor_data_file, model_file):
             continue
     params_df.to_csv(model_file)
 
+def trainMotor(motor, targets, frames):
+    motor_name = str(motor['name'])
+    targets = targets[motor_name]
+    norm_targets = (targets - motor['init'])/(motor['max'] - motor['min'])
+    pau_values = frames[ALL_SHAPEKEYS]
+    try:
+        res = find_params(pau_values, norm_targets)
+        return res.x
+    except Exception as ex:
+        pass
+
 if __name__ == '__main__':
     import argparse
     parser = argparse.ArgumentParser()
@@ -69,6 +80,5 @@ if __name__ == '__main__':
     parser.add_argument('-s, --shapekey-frame-file', dest='shapekey_frame_file', required=True)
     parser.add_argument('-d, --motor-data-file', dest='motor_data_file', required=True)
     parser.add_argument('-o, --output-model-file', dest='model_file', required=True)
-    #options = parser.parse_args()
-    #run(options.motor_config_file, options.shapekey_frame_file, options.motor_data_file, options.model_file)
-    run('motors_settings.yaml', 'data/shkey_frame_data.csv', 'data/shkey_frame_data-motors.csv', 'motor_mapping_model.csv')
+    options = parser.parse_args()
+    run(options.motor_config_file, options.shapekey_frame_file, options.motor_data_file, options.model_file)
