@@ -73,6 +73,8 @@ class MainWindow(QtGui.QMainWindow):
 
         self.frames = None
         self.frame_filename = None
+        self.motor_value_filename = None
+        self.saved_motor_values_df = None
         self.motor_value_thread = threading.Thread(target=self.readMotorValues)
         self.motor_value_thread.daemon = True
         self.motor_value_thread.start()
@@ -85,7 +87,6 @@ class MainWindow(QtGui.QMainWindow):
         self.playMotorCheckState = QtCore.Qt.Unchecked
         self.calibMotorCheckState = QtCore.Qt.Unchecked
         self.configMotorCheckState = QtCore.Qt.Unchecked
-        self.ui.enableCalibMotorsCheckBox.stateChanged.connect(self.enableCalibMotors)
         self.ui.enableConfigMotorsCheckBox.stateChanged.connect(self.enableConfigMotors)
         self.ui.enablePlayMotorsCheckBox.stateChanged.connect(self.enablePlayMotors)
         self.button_group = QtGui.QButtonGroup(self)
@@ -96,13 +97,6 @@ class MainWindow(QtGui.QMainWindow):
 
         self.load_motor_settings('/home/wenwei/workspace/hansonrobotics/motor-controller/motors_settings.yaml')
         self.load_frames('/home/wenwei/workspace/hansonrobotics/motor-controller/data/shkey_frame_data.csv')
-
-    def enableCalibMotors(self, state):
-        self.calibMotorCheckState = state
-        for row in range(self.ui.motorValueCalibTableWidget.rowCount()):
-            widget = self.ui.motorValueCalibTableWidget.cellWidget(row, 2)
-            if widget:
-                widget.ui.enableCheckBox.setCheckState(self.calibMotorCheckState)
 
     def enableConfigMotors(self, state):
         self.configMotorCheckState = state
@@ -249,25 +243,6 @@ class MainWindow(QtGui.QMainWindow):
             widget.ui.enableCheckBox.setCheckState(self.playMotorCheckState)
             widget.setVisible(False)
 
-
-        # Update motor value calibration table widget
-        for col in reversed(range(self.ui.motorValueCalibTableWidget.columnCount())):
-            self.ui.motorValueCalibTableWidget.removeColumn(col)
-
-        self.ui.motorValueCalibTableWidget.setRowCount(len(motors))
-        self.ui.motorValueCalibTableWidget.setColumnCount(3)
-        self.ui.motorValueCalibTableWidget.setHorizontalHeaderLabels('Motor Name,Target,Editor'.split(','))
-        for row, motor in enumerate(motors):
-            key_item = QtGui.QTableWidgetItem(motor['name'])
-            self.ui.motorValueCalibTableWidget.setItem(row, 0, key_item)
-            value_item = QtGui.QTableWidgetItem()
-            value_item.setData(QtCore.Qt.DisplayRole, -1)
-            self.ui.motorValueCalibTableWidget.setItem(row, 1, value_item)
-            widget = MotorValueEditor(self.ui.motorValueCalibTableWidget, motor, row, False)
-            self.ui.motorValueCalibTableWidget.setCellWidget(row, 2, widget)
-            widget.ui.enableCheckBox.setCheckState(self.calibMotorCheckState)
-            widget.setVisible(False)
-
         self.playPAU(self.ui.frameSlider.value())
 
     def getCurrentMotors(self):
@@ -298,18 +273,31 @@ class MainWindow(QtGui.QMainWindow):
             self.tree_model.addMotors(motors)
             self.ui.treeView.expandAll()
 
-            self.ui.motorTableWidget.setRowCount(len(motors))
-            self.ui.motorTableWidget.setColumnCount(2)
+            for col in reversed(range(self.ui.motorMonitorTableWidget.columnCount())):
+                self.ui.motorMonitorTableWidget.removeColumn(col)
+            self.ui.motorMonitorTableWidget.setRowCount(len(motors))
+            self.ui.motorMonitorTableWidget.setColumnCount(2)
+            self.ui.motorMonitorTableWidget.setHorizontalHeaderLabels('Motor Name,Target'.split(','))
             for row, motor in enumerate(self.app.motors):
-                key_item = self.ui.motorTableWidget.item(row, 0)
                 key_item = QtGui.QTableWidgetItem(motor['name'])
-                self.ui.motorTableWidget.setItem(row, 0, key_item)
+                self.ui.motorMonitorTableWidget.setItem(row, 0, key_item)
                 value_item = QtGui.QTableWidgetItem()
                 value_item.setData(QtCore.Qt.DisplayRole, -1)
-                self.ui.motorTableWidget.setItem(row, 1, value_item)
+                self.ui.motorMonitorTableWidget.setItem(row, 1, value_item)
 
             self.motor_configs = Configs()
             self.motor_configs.parseMotors(motors)
+
+            for col in reversed(range(self.ui.savedMotorValueTableWidget.columnCount())):
+                self.ui.savedMotorValueTableWidget.removeColumn(col)
+            self.ui.savedMotorValueTableWidget.setRowCount(len(motors))
+            self.ui.savedMotorValueTableWidget.setColumnCount(2)
+            self.ui.savedMotorValueTableWidget.setHorizontalHeaderLabels('Motor Name,Target'.split(','))
+            for row, motor in enumerate(self.app.motors):
+                key_item = QtGui.QTableWidgetItem(motor['name'])
+                self.ui.savedMotorValueTableWidget.setItem(row, 0, key_item)
+                value_item = QtGui.QTableWidgetItem('nan')
+                self.ui.savedMotorValueTableWidget.setItem(row, 1, value_item)
 
     def save_motor_settings(self, filename):
         filename = str(filename)
@@ -397,13 +385,13 @@ class MainWindow(QtGui.QMainWindow):
     def showMotorValues(self):
         while True:
             for motor in self.app.motors:
-                item = self.ui.motorTableWidget.findItems(
+                item = self.ui.motorMonitorTableWidget.findItems(
                     motor['name'], QtCore.Qt.MatchExactly)
                 position = motor.get('current_pos')
                 if position is not None and item is not None:
                     motor_item = item[0]
                     row = motor_item.row()
-                    value_item = self.ui.motorTableWidget.item(row, 1)
+                    value_item = self.ui.motorMonitorTableWidget.item(row, 1)
                     value_item.setData(QtCore.Qt.DisplayRole, position)
             time.sleep(0.1)
 
@@ -413,6 +401,8 @@ class MainWindow(QtGui.QMainWindow):
     def load_frames(self, filename):
         self.frames = pd.read_csv(filename)
         self.frame_filename = filename
+        self.motor_value_filename = '{}-motors.csv'.format(
+            os.path.splitext(self.frame_filename)[0])
         self.ui.frameSlider.setEnabled(True)
         self.ui.frameSlider.setMinimum(0)
         self.ui.frameSlider.setMaximum(self.frames.shape[0]-1)
@@ -421,6 +411,23 @@ class MainWindow(QtGui.QMainWindow):
         self.ui.frameSpinBox.setMaximum(self.frames.shape[0]-1)
         if self.frames.shape[1] != len(SHAPE_KEYS):
             logger.error("Frame data dimision is incorrect")
+            return
+
+        if not os.path.isfile(self.motor_value_filename):
+            names = [motor['name'] for motor in self.app.motors]
+            if not names:
+                logger.error("No motors loaded")
+                return
+            total_frames = self.frames.shape[0]
+            self.saved_motor_values_df = pd.DataFrame(
+                np.nan, index=np.arange(total_frames), columns=names)
+            self.saved_motor_values_df.to_csv(self.motor_value_filename, index=False)
+            logger.info("Motor target file {}".format(self.motor_value_filename))
+        else:
+            self.saved_motor_values_df = pd.read_csv(self.motor_value_filename)
+            logger.warn("Append to existing motor target file {}".format(
+                self.motor_value_filename))
+
         if self.frames.shape[0] > 0:
             self.ui.frameSlider.setValue(0)
             self.playPAU(self.ui.frameSlider.value())
@@ -445,6 +452,20 @@ class MainWindow(QtGui.QMainWindow):
                     self.ui.pauValueTableWidget.setItem(row, 1, value_item)
                 else:
                     value_item.setData(QtCore.Qt.DisplayRole, value)
+
+            # Update Saved motor value
+            for row, motor in enumerate(self.app.motors):
+                motor_name = str(motor['name'])
+                key_item = self.ui.savedMotorValueTableWidget.item(row, 0)
+                key_item.setText(motor_name)
+                try:
+                    target = self.saved_motor_values_df.loc[frame][motor_name]
+                    target = str(target)
+                except Exception as ex:
+                    logger.warn(ex)
+                    target = "nan"
+                value_item = self.ui.savedMotorValueTableWidget.item(row, 1)
+                value_item.setText(target)
 
             if self.motor_configs is not None:
                 for row, motor in enumerate(self.motor_configs.motors):
@@ -480,14 +501,6 @@ class MainWindow(QtGui.QMainWindow):
                         widget = self.ui.motorValueTableWidget.cellWidget(row, 2)
                         if widget and value != -1:
                             widget.ui.motorValueDoubleSpinBox.setValue(value)
-
-                    item = self.ui.motorValueCalibTableWidget.findItems(
-                        motor['name'], QtCore.Qt.MatchExactly)
-                    if item:
-                        motor_item = item[0]
-                        row = motor_item.row()
-                        value_item = self.ui.motorValueCalibTableWidget.item(row, 1)
-                        value_item.setData(QtCore.Qt.DisplayRole, value)
             else:
                 logger.error("No motor configs")
 
@@ -495,15 +508,23 @@ class MainWindow(QtGui.QMainWindow):
         frame = self.ui.frameSlider.value()
         total_frames = self.frames.shape[0]
         if self.frames is not None and frame < total_frames:
-            filename = '{}-motors.csv'.format(os.path.splitext(self.frame_filename)[0])
-            if not os.path.isfile(filename):
-                names = [motor['name'] for motor in self.app.motors]
-                df = pd.DataFrame(np.nan, index=np.arange(total_frames), columns=names)
-                df.to_csv(filename, index=False)
-            df = pd.read_csv(filename)
             motor_positions = [motor.get('current_pos', np.nan) for motor in self.app.motors]
-            df.loc[frame] = motor_positions
-            df.to_csv(filename, index=False)
+            self.saved_motor_values_df.loc[frame] = motor_positions
+            self.saved_motor_values_df.to_csv(self.motor_value_filename, index=False)
+
+            # Update Saved motor value
+            for row, motor in enumerate(self.app.motors):
+                motor_name = str(motor['name'])
+                key_item = self.ui.savedMotorValueTableWidget.item(row, 0)
+                key_item.setText(motor_name)
+                try:
+                    target = self.saved_motor_values_df.loc[frame][motor_name]
+                    target = str(target)
+                except Exception as ex:
+                    logger.warn(ex)
+                    target = "nan"
+                value_item = self.ui.savedMotorValueTableWidget.item(row, 1)
+                value_item.setText(target)
 
     def trainModel(self):
         pass
