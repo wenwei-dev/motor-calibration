@@ -60,7 +60,9 @@ def run(motor_config_file, pau_data_file, motor_data_file, model_file):
         try:
             res = find_params(pau_values[shapekeys], norm_targets)
             params_df[motor_name] = res.x
+            plot_params(motor_name, pau_values[shapekeys], res.x, norm_targets)
         except Exception as ex:
+            logger.warn(ex)
             continue
     params_df.to_csv(model_file)
 
@@ -71,6 +73,7 @@ def trainMotor(motor, targets, frames):
     pau_values = frames[ALL_SHAPEKEYS]
     try:
         res = find_params(pau_values, norm_targets)
+        plot_params(motor_name, pau_values, res.x, norm_targets)
         if res.success:
             logger.info("Training {} Success, {}".format(motor_name, res.message))
         else:
@@ -78,6 +81,30 @@ def trainMotor(motor, targets, frames):
         return res.x
     except Exception as ex:
         pass
+
+def plot_params(motor_name, shapekey_values, x, targets):
+    import matplotlib.pyplot as plt
+    param_num = shapekey_values.shape[1]
+
+    sum = x[:param_num]*shapekey_values + x[-1]
+    values = sum.sum(axis=1)
+    #values = values*(motor['max'] - motor['min'])+motor['init']
+
+    error = targets-values
+    #print error
+    #print 'mse', (error**2).sum()
+
+    fig, ax = plt.subplots()
+    targets = targets.dropna()
+    ax.plot(targets.index, targets, 'ro', label='targets')
+    ax.plot(values.index, values, 'b+', label='evaluates')
+    ax.legend(loc='lower right')
+    fig_fname = '{}.png'.format(os.path.join('figs', motor_name))
+    if not os.path.isdir(os.path.dirname(fig_fname)):
+        os.makedirs(os.path.dirname(fig_fname))
+    fig.savefig(fig_fname)
+    plt.close()
+    logger.info("Saved fig to {}".format(fig_fname))
 
 if __name__ == '__main__':
     import argparse
