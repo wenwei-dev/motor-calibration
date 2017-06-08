@@ -20,7 +20,6 @@ def find_params(shapekey_values, targets):
         sum = x[:param_num]*shapekey_values + x[-1]
         diff = sum.sum(axis=1)-targets
         mse = (diff**2).sum()
-        print mse
         return mse
 
     bounds = [(-1, 1)]*(param_num+1)
@@ -32,7 +31,7 @@ def find_params(shapekey_values, targets):
         raise Exception('No data to train')
     res = minimize(
         fun, [0.1]*param_num+[0], args=(shapekey_values, targets),
-        method='L-BFGS-B', tol=1e-15, options={'disp': False}, bounds=bounds)
+        method='L-BFGS-B', tol=1e-15, options={'disp': True}, bounds=bounds)
     return res
 
 def run(motor_config_file, pau_data_file, motor_data_file, model_file):

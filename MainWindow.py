@@ -79,7 +79,8 @@ class MainWindow(QtGui.QMainWindow):
         self.motor_value_filename = None
         self.saved_motor_values_df = None
         self.model_df = pd.DataFrame(index=ALL_SHAPEKEYS+['Const'])
-        self.model_file = 'abc.csv'
+        self.model_file = '/tmp/mapping_model.csv'
+        self.training = False
 
         self.motor_value_thread = threading.Thread(target=self.readMotorValues)
         self.motor_value_thread.daemon = True
@@ -409,6 +410,9 @@ class MainWindow(QtGui.QMainWindow):
         self.frame_filename = filename
         self.motor_value_filename = '{}-motors.csv'.format(
             os.path.splitext(self.frame_filename)[0])
+        self.model_file = '{}-model.csv'.format(
+            os.path.splitext(self.frame_filename)[0])
+
         self.ui.frameSlider.setEnabled(True)
         self.ui.frameSlider.setMinimum(0)
         self.ui.frameSlider.setMaximum(self.frames.shape[0]-1)
@@ -533,12 +537,18 @@ class MainWindow(QtGui.QMainWindow):
                 value_item.setText(target)
 
     def trainModel(self):
+        self.training = True
+        self.ui.trainButton.setEnabled(not self.training)
+        threading.Thread(target=self._trainModel).start()
+
+    def _trainModel(self):
         pool = Pool(6)
         params = pool.map(
             partial(trainMotor, targets=self.saved_motor_values_df, frames=self.frames),
             self.app.motors)
         pool.close()
         pool.join()
+        logger.info("Training is finished")
 
         for motor, x in zip(self.app.motors, params):
             if x is not None:
@@ -546,3 +556,6 @@ class MainWindow(QtGui.QMainWindow):
                 self.model_df[motor_name] = x
         self.model_df.to_csv(self.model_file)
         logger.info("Save model to {}".format(self.model_file))
+
+        self.training = False
+        self.ui.trainButton.setEnabled(not self.training)
