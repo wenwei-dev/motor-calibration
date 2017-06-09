@@ -16,6 +16,9 @@ ALL_SHAPEKEYS = 'brow_center_DN,brow_center_UP,brow_inner_DN.L,brow_inner_DN.R,b
 
 logger = logging.getLogger(__name__)
 
+def create_model():
+    return pd.DataFrame(index=ALL_SHAPEKEYS+['Const'])
+
 def softmax(x):
     """Compute softmax values for each sets of scores in x."""
     return np.exp(x) / np.sum(np.exp(x), axis=0)
@@ -81,11 +84,11 @@ def trainMotor(motor, targets, frames):
     pau_values = frames[ALL_SHAPEKEYS]
     try:
         res = find_params(pau_values, norm_targets)
-        plot_params(motor, pau_values, res.x, targets)
         if res.success:
             logger.info("Training {} Success, {}".format(motor_name, res.message))
         else:
             logger.warn("Trainig {} Fail, {}".format(motor_name, res.message))
+        plot_params(motor, pau_values, res.x, targets)
         return res.x
     except Exception as ex:
         pass

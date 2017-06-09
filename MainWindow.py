@@ -18,7 +18,7 @@ import numpy as np
 from configs import Configs
 from mappers import DefaultMapper, TrainedMapper
 import traceback
-from train import ALL_SHAPEKEYS, find_params, trainMotor
+from train import trainMotor, plot_params, create_model
 from functools import partial
 
 logger = logging.getLogger(__name__)
@@ -80,7 +80,7 @@ class MainWindow(QtGui.QMainWindow):
         self.frame_filename = None
         self.motor_value_filename = None
         self.saved_motor_values_df = None
-        self.model_df = pd.DataFrame(index=ALL_SHAPEKEYS+['Const'])
+        self.model_df = create_model()
         self.model_file = '/tmp/mapping_model.csv'
         self.training = False
 
@@ -574,8 +574,20 @@ class MainWindow(QtGui.QMainWindow):
                 motor_name = str(motor['name'])
                 self.model_df[motor_name] = x
         self.model_df.to_csv(self.model_file)
+
         logger.info("Save model to {}".format(self.model_file))
         logger.info("Training is finished")
+
+        # Plot figs
+        #for motor in self.app.motors:
+        #    shapekeys = self.model_df.index[:-1]
+        #    try:
+        #        x = self.model_df[motor['name']]
+        #    except KeyError as ex:
+        #        logger.warn("Motor {} has no model".format(motor['name']))
+        #        continue
+        #    plot_params(motor, self.frames[shapekeys], x,
+        #        self.saved_motor_values_df[motor['name']])
 
         self.training = False
         self.ui.trainButton.setEnabled(not self.training)
