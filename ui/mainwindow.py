@@ -2,7 +2,7 @@
 
 # Form implementation generated from reading ui file 'ui/mainwindow.ui'
 #
-# Created: Fri Jun  9 20:45:43 2017
+# Created: Fri Jun  9 20:52:05 2017
 #      by: PyQt4 UI code generator 4.10.4
 #
 # WARNING! All changes made in this file will be lost!
@@ -123,6 +123,9 @@ class Ui_MainWindow(object):
         self.trainButton = QtGui.QPushButton(self.frame_2)
         self.trainButton.setObjectName(_fromUtf8("trainButton"))
         self.horizontalLayout_3.addWidget(self.trainButton)
+        self.plotButton = QtGui.QPushButton(self.frame_2)
+        self.plotButton.setObjectName(_fromUtf8("plotButton"))
+        self.horizontalLayout_3.addWidget(self.plotButton)
         spacerItem1 = QtGui.QSpacerItem(40, 20, QtGui.QSizePolicy.Expanding, QtGui.QSizePolicy.Minimum)
         self.horizontalLayout_3.addItem(spacerItem1)
         self.verticalLayout_4.addLayout(self.horizontalLayout_3)
@@ -142,6 +145,7 @@ class Ui_MainWindow(object):
         self.gridLayout.addWidget(self.pauValueTableWidget, 3, 0, 1, 1)
         self.savedMotorValueTableWidget = QtGui.QTableWidget(self.frame_2)
         self.savedMotorValueTableWidget.setContextMenuPolicy(QtCore.Qt.CustomContextMenu)
+        self.savedMotorValueTableWidget.setEditTriggers(QtGui.QAbstractItemView.NoEditTriggers)
         self.savedMotorValueTableWidget.setAlternatingRowColors(True)
         self.savedMotorValueTableWidget.setObjectName(_fromUtf8("savedMotorValueTableWidget"))
         self.savedMotorValueTableWidget.setColumnCount(2)
@@ -306,6 +310,7 @@ class Ui_MainWindow(object):
         self.playPAUWidget.setTabText(self.playPAUWidget.indexOf(self.tab), _translate("MainWindow", "Config", None))
         self.loadFrameButton.setText(_translate("MainWindow", "Load Frames", None))
         self.trainButton.setText(_translate("MainWindow", "Train", None))
+        self.plotButton.setText(_translate("MainWindow", "Plot", None))
         item = self.pauValueTableWidget.horizontalHeaderItem(0)
         item.setText(_translate("MainWindow", "Key", None))
         item = self.pauValueTableWidget.horizontalHeaderItem(1)

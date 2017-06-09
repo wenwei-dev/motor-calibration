@@ -15,6 +15,7 @@ from configs import Configs
 ALL_SHAPEKEYS = 'brow_center_DN,brow_center_UP,brow_inner_DN.L,brow_inner_DN.R,brow_inner_UP.L,brow_inner_UP.R,brow_outer_DN.L,brow_outer_DN.R,brow_outer_UP.L,brow_outer_up.R,eye-blink.LO.L,eye-blink.LO.R,eye-blink.UP.L,eye-blink.UP.R,eye-flare.LO.L,eye-flare.LO.R,eye-flare.UP.L,eye-flare.UP.R,eyes-look.dn,eyes-look.up,jaw,lip-DN.C.DN,lip-DN.C.UP,lip-DN.L.DN,lip-DN.L.UP,lip-DN.R.DN,lip-JAW.DN,lip-UP.C.DN,lip-UP.C.UP,lip-UP.L.DN,lip-UP.L.UP,lip-UP.R.DN,lip-UP.R.UP,lip.DN.R.UP,lips-frown.L,lips-frown.R,lips-narrow.L,lips-narrow.R,lips-smile.L,lips-smile.R,lips-wide.L,lips-wide.R,sneer.L,sneer.R,wince.L,wince.R'.split(',')
 
 logger = logging.getLogger(__name__)
+FIG_DIR = 'figs'
 
 def create_model():
     return pd.DataFrame(index=ALL_SHAPEKEYS+['Const'])
@@ -88,7 +89,6 @@ def trainMotor(motor, targets, frames):
             logger.info("Training {} Success, {}".format(motor_name, res.message))
         else:
             logger.warn("Trainig {} Fail, {}".format(motor_name, res.message))
-        plot_params(motor, pau_values, res.x, targets)
         return res.x
     except Exception as ex:
         pass
@@ -130,10 +130,10 @@ def plot_params(motor, shapekey_values, x, targets):
     ax.set_xlim(trained_values.index.min()-10, trained_values.index.max()+10)
     ax.set_ylim(min(default_values.min(), trained_values.min())-100,
                 max(default_values.max(), trained_values.max())+100)
-    plt.xticks(targets.index, targets.index)
+    plt.xticks(targets.index, targets.index, rotation='vertical')
 
     ax.legend(loc='best', fancybox=True, framealpha=0.5)
-    fig_fname = '{}.png'.format(os.path.join('figs', motor['name']))
+    fig_fname = '{}.png'.format(os.path.join(FIG_DIR, motor['name']))
     if not os.path.isdir(os.path.dirname(fig_fname)):
         os.makedirs(os.path.dirname(fig_fname))
     fig.savefig(fig_fname)

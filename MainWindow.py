@@ -8,6 +8,7 @@ import time
 from PyQt4 import QtCore
 from PyQt4 import QtGui
 from ui.mainwindow import Ui_MainWindow
+from ui.figwindow import Ui_Dialog
 from MotorTreeModel import MotorTreeModel
 from MotorValueEditor import MotorValueEditor
 from collections import OrderedDict
@@ -18,7 +19,7 @@ import numpy as np
 from configs import Configs
 from mappers import DefaultMapper, TrainedMapper
 import traceback
-from train import trainMotor, plot_params, create_model
+from train import trainMotor, plot_params, create_model, FIG_DIR
 from functools import partial
 
 logger = logging.getLogger(__name__)
@@ -39,6 +40,7 @@ class MainWindow(QtGui.QMainWindow):
         self.ui.treeView.customContextMenuRequested.connect(self.onTreeViewContextMenu)
         self.ui.savedMotorValueTableWidget.customContextMenuRequested.connect(
             self.onSavedMotorValueTableWidgetContextMenu)
+        self.ui.savedMotorValueTableWidget.itemDoubleClicked.connect(self.showPlot)
         self.ui.motorConfigTableWidget.cellChanged.connect(self.cellChanged)
 
         self.timer = QtCore.QTimer(self)
@@ -103,6 +105,7 @@ class MainWindow(QtGui.QMainWindow):
         self.button_group.addButton(self.ui.trainedMapperButton)
         self.ui.saveMotorValuesButton.clicked.connect(self.saveMotorValues)
         self.ui.trainButton.clicked.connect(self.trainModel)
+        self.ui.plotButton.clicked.connect(self.plot)
 
         self.load_motor_settings('/home/wenwei/workspace/hansonrobotics/motor-controller/motors_settings.yaml')
         self.load_frames('/home/wenwei/workspace/hansonrobotics/motor-controller/data/shkey_frame_data.csv')
@@ -274,6 +277,19 @@ class MainWindow(QtGui.QMainWindow):
     def onSavedMotorValueTableWidgetContextMenu(self, point):
         global_point = self.ui.savedMotorValueTableWidget.viewport().mapToGlobal(point)
         self.savedMotorValueMenu.exec_(global_point)
+
+    def showPlot(self, item):
+        motor = self.ui.savedMotorValueTableWidget.item(item.row(), 0)
+        fig_file = os.path.join(FIG_DIR, '{}.png'.format(motor.text()))
+        if os.path.isfile(fig_file):
+            fig = QtGui.QPixmap(fig_file)
+            dialog = QtGui.QDialog(self)
+            ui = Ui_Dialog()
+            ui.setupUi(dialog)
+            dialog.ui = ui
+            dialog.setModal(False)
+            dialog.ui.figLabel.setPixmap(fig)
+            dialog.show()
 
     def load_motor_settings(self, filename):
         self.filename = filename
@@ -578,20 +594,19 @@ class MainWindow(QtGui.QMainWindow):
         logger.info("Save model to {}".format(self.model_file))
         logger.info("Training is finished")
 
-        # Plot figs
-        #for motor in self.app.motors:
-        #    shapekeys = self.model_df.index[:-1]
-        #    try:
-        #        x = self.model_df[motor['name']]
-        #    except KeyError as ex:
-        #        logger.warn("Motor {} has no model".format(motor['name']))
-        #        continue
-        #    plot_params(motor, self.frames[shapekeys], x,
-        #        self.saved_motor_values_df[motor['name']])
-
         self.training = False
         self.ui.trainButton.setEnabled(not self.training)
 
+    def plot(self):
+        for motor in self.app.motors:
+            shapekeys = self.model_df.index[:-1]
+            try:
+                x = self.model_df[motor['name']]
+            except KeyError as ex:
+                logger.warn("Motor {} has no model".format(motor['name']))
+                continue
+            plot_params(motor, self.frames[shapekeys], x,
+                self.saved_motor_values_df[motor['name']])
 
     def clearMotorValues(self):
         frame = self.ui.frameSlider.value()
