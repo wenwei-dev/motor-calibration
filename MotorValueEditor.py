@@ -28,7 +28,7 @@ class MotorValueEditor(QtGui.QWidget):
         self.ui.motorValueDoubleSpinBox.installEventFilter(self)
         self.ui.enableCheckBox.toggled.connect(self.enableMotor)
 
-        self.update = True
+        self.polling = True
         self.stopped = False
         self.polljob = threading.Thread(target=self.poll)
         self.polljob.daemon = True
@@ -78,7 +78,7 @@ class MotorValueEditor(QtGui.QWidget):
 
     def poll(self):
         while not self.stopped:
-            if self.update:
+            if self.polling:
                 try:
                     controller = self.get_controller()
                     if controller is not None:
@@ -118,9 +118,9 @@ class MotorValueEditor(QtGui.QWidget):
 
     def setValue(self, value):
         while True:
-            self.setUpdate(False)
+            self.setPolling(False)
             self.ui.motorValueDoubleSpinBox.setValue(value)
-            self.setUpdate(True)
+            self.setPolling(True)
             break
             time.sleep(0.1)
 
@@ -147,8 +147,8 @@ class MotorValueEditor(QtGui.QWidget):
             if item is not None:
                 item.setData(QtCore.Qt.EditRole, self.motor[key])
 
-    def setUpdate(self, update):
-        self.update = update
+    def setPolling(self, polling):
+        self.polling = polling
 
     def delete(self):
         self.stopped = True

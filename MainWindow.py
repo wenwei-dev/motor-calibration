@@ -43,7 +43,7 @@ class MainWindow(QtGui.QMainWindow):
 
         self.timer = QtCore.QTimer(self)
         self.timer.timeout.connect(self.updateView)
-        self.timer.start(300)
+        self.timer.start(200)
 
         self.motor_header = OrderedDict()
         self.motor_header['Name'] = 'name'
@@ -369,6 +369,9 @@ class MainWindow(QtGui.QMainWindow):
                 else:
                     item.setForeground(QtGui.QBrush(QtGui.QColor(0,0,0)))
         self.ui.motorConfigTableWidget.viewport().update()
+        for row in range(self.ui.motorValueTableWidget.rowCount()):
+            widget = self.ui.motorValueTableWidget.cellWidget(row, 2)
+            widget.ui.motorValueSlider.update()
 
     def readPAU(self, f):
         for line in iter(f.readline, ''):
@@ -566,14 +569,13 @@ class MainWindow(QtGui.QMainWindow):
             self.app.motors)
         pool.close()
         pool.join()
-        logger.info("Training is finished")
-
         for motor, x in zip(self.app.motors, params):
             if x is not None:
                 motor_name = str(motor['name'])
                 self.model_df[motor_name] = x
         self.model_df.to_csv(self.model_file)
         logger.info("Save model to {}".format(self.model_file))
+        logger.info("Training is finished")
 
         self.training = False
         self.ui.trainButton.setEnabled(not self.training)
