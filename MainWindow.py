@@ -512,7 +512,7 @@ class MainWindow(QtGui.QMainWindow):
                         logger.debug("Can't initilize mapper for motor {}, error {}".format(motor['name'], ex))
                     if mapper is not None:
                         try:
-                            value = mapper.map({'m_coeffs':m_coeffs})
+                            value = mapper.map(m_coeffs)
                             value = value.item()
                         except Exception as ex:
                             logger.debug("Motor {} has no key {}".format(motor['name'], ex))

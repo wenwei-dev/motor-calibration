@@ -105,7 +105,7 @@ def plot_params(motor, shapekey_values, x, targets):
 
     for row, m_coeffs in shapekey_values.iterrows():
         try:
-            default_value = default_mapper.map({'m_coeffs':m_coeffs})
+            default_value = default_mapper.map(m_coeffs)
             trained_value = trained_mapper._map(m_coeffs, x)
         except Exception as ex:
             continue
@@ -120,13 +120,14 @@ def plot_params(motor, shapekey_values, x, targets):
     ax.set_xlabel('Frame')
     ax.set_ylabel('Motor Value')
     targets = targets.dropna()
-    ax.plot(default_values.index+1, default_values, 'go', label='original evaluates', alpha=0.6, ms=3)
-    ax.plot(trained_values.index+1, trained_values, 'bo', label='optimized evaluates', alpha=0.6, ms=3)
-    ax.plot(targets.index+1, targets, 'ro', label='targets', alpha=0.6, ms=6)
-    ax.vlines(targets.index+1, [0], targets, linestyles='dotted')
+    ax.plot(default_values.index, default_values, 'go', label='original evaluates', alpha=0.6, ms=3)
+    ax.plot(trained_values.index, trained_values, 'bo', label='optimized evaluates', alpha=0.6, ms=3)
+    ax.plot(targets.index, targets, 'ro', label='targets', alpha=0.6, ms=6)
+    ax.vlines(targets.index, [0], targets, linestyles='dotted')
     ax.set_xlim(trained_values.index.min()-10, trained_values.index.max()+10)
-    ax.set_ylim(trained_values.min()-100, trained_values.max()+100)
-    plt.xticks(targets.index+1, targets.index+1)
+    ax.set_ylim(min(default_values.min(), trained_values.min())-100,
+                max(default_values.max(), trained_values.max())+100)
+    plt.xticks(targets.index, targets.index)
 
     ax.legend(loc='best', fancybox=True, framealpha=0.5)
     fig_fname = '{}.png'.format(os.path.join('figs', motor['name']))

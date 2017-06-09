@@ -1,7 +1,7 @@
 import logging
 import math
 import pandas as pd
-from pau2motors import ParserFactory, MapperFactory
+from pau2motors import MapperFactory
 
 logger = logging.getLogger(__name__)
 
@@ -25,13 +25,12 @@ class DefaultMapper(BaseMapper):
 
     def __init__(self, motor_entry):
         super(DefaultMapper, self).__init__(motor_entry)
-        self.parser = ParserFactory.build(
-            motor_entry["pau"]["parser"])
         self.mapper = MapperFactory.build(
             motor_entry["pau"]["function"], motor_entry)
 
     def map(self, msg):
-        coeff = self.parser.get_coeff(msg)
+        keys = self.motor_entry['pau']['parser']['shapekey'].split(';')
+        coeff = msg[keys]
         angle = self.mapper.map(coeff)
         angle = self._saturated(angle)
         pos = self.angle2pulse(angle)
@@ -57,7 +56,7 @@ class TrainedMapper(BaseMapper):
         return pos
 
     def map(self, msg):
-        coeff = msg['m_coeffs'][self.model_df.index[:-1]]
+        coeff = msg[self.model_df.index[:-1]]
         x = self.model_df[self.motor_entry['name']]
         return self._map(coeff, x)
 
