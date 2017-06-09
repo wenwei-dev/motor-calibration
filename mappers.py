@@ -19,7 +19,7 @@ class BaseMapper(object):
         return pos
 
     def _saturated(self, angle):
-        return min(max(angle, self.motor_entry['min']), self.motor_entry['max'])  
+        return min(max(angle, self.motor_entry['min']), self.motor_entry['max'])
 
 class DefaultMapper(BaseMapper):
 
@@ -49,14 +49,17 @@ class TrainedMapper(BaseMapper):
         pos = angle*(self.motor_entry['pulse_max']-self.motor_entry['pulse_min'])+self.motor_entry['init']
         return pos
 
-    def map(self, msg):
-        coeff = msg['m_coeffs'][self.model_df.index[:-1]]
+    def _map(self, coeff, x):
         param_num = len(coeff)
-        x = self.model_df[self.motor_entry['name']]
         sum = x[:param_num]*coeff + x[-1]
         angle = sum.sum()
         pos = self.angle2pulse(angle)
         return pos
+
+    def map(self, msg):
+        coeff = msg['m_coeffs'][self.model_df.index[:-1]]
+        x = self.model_df[self.motor_entry['name']]
+        return self._map(coeff, x)
 
 if __name__ == '__main__':
     logging.getLogger().setLevel(logging.INFO)

@@ -1,3 +1,7 @@
+import sys
+sys.path.insert(0, '/opt/hansonrobotics/py2env/lib/python2.7/dist-packages')
+sys.path.insert(0, '/opt/hansonrobotics/ros/lib/python2.7/dist-packages')
+
 from scipy.optimize import minimize
 import pandas as pd
 import numpy as np
@@ -5,6 +9,8 @@ import os
 import yaml
 import logging
 import traceback
+from mappers import DefaultMapper, TrainedMapper
+from configs import Configs
 
 ALL_SHAPEKEYS = 'brow_center_DN,brow_center_UP,brow_inner_DN.L,brow_inner_DN.R,brow_inner_UP.L,brow_inner_UP.R,brow_outer_DN.L,brow_outer_DN.R,brow_outer_UP.L,brow_outer_up.R,eye-blink.LO.L,eye-blink.LO.R,eye-blink.UP.L,eye-blink.UP.R,eye-flare.LO.L,eye-flare.LO.R,eye-flare.UP.L,eye-flare.UP.R,eyes-look.dn,eyes-look.up,jaw,lip-DN.C.DN,lip-DN.C.UP,lip-DN.L.DN,lip-DN.L.UP,lip-DN.R.DN,lip-JAW.DN,lip-UP.C.DN,lip-UP.C.UP,lip-UP.L.DN,lip-UP.L.UP,lip-UP.R.DN,lip-UP.R.UP,lip.DN.R.UP,lips-frown.L,lips-frown.R,lips-narrow.L,lips-narrow.R,lips-smile.L,lips-smile.R,lips-wide.L,lips-wide.R,sneer.L,sneer.R,wince.L,wince.R'.split(',')
 
@@ -86,13 +92,27 @@ def trainMotor(motor, targets, frames):
 
 def plot_params(motor, shapekey_values, x, targets):
     import matplotlib.pyplot as plt
+    motor_configs = Configs()
+    motor_entry = motor_configs.parseMotors([motor])
+    motor_entry = motor_configs.motors[0]
     param_num = shapekey_values.shape[1]
+    row_num = shapekey_values.shape[0]
 
-    sum = x[:param_num]*shapekey_values + x[-1]
-    values = sum.sum(axis=1)
-    values = values*(motor['max']-motor['min'])+motor['init']
+    default_mapper = DefaultMapper(motor_entry)
+    trained_mapper = TrainedMapper(motor_entry)
+    default_values = pd.Series(np.nan, index=np.arange(row_num))
+    trained_values = pd.Series(np.nan, index=np.arange(row_num))
 
-    error = targets-values
+    for row, m_coeffs in shapekey_values.iterrows():
+        try:
+            default_value = default_mapper.map({'m_coeffs':m_coeffs})
+            trained_value = trained_mapper._map(m_coeffs, x)
+        except Exception as ex:
+            continue
+        default_values.set_value(row, default_value)
+        trained_values.set_value(row, trained_value)
+
+    error = targets-trained_values
     mse = (error**2).sum()
 
     fig, ax = plt.subplots()
@@ -100,11 +120,12 @@ def plot_params(motor, shapekey_values, x, targets):
     ax.set_xlabel('Frame')
     ax.set_ylabel('Motor Value')
     targets = targets.dropna()
-    ax.plot(values.index+1, values, 'bo', label='evaluates', alpha=0.6, ms=3)
+    ax.plot(default_values.index+1, default_values, 'go', label='original evaluates', alpha=0.6, ms=3)
+    ax.plot(trained_values.index+1, trained_values, 'bo', label='optimized evaluates', alpha=0.6, ms=3)
     ax.plot(targets.index+1, targets, 'ro', label='targets', alpha=0.6, ms=6)
     ax.vlines(targets.index+1, [0], targets, linestyles='dotted')
-    ax.set_xlim(values.index.min()-10, values.index.max()+10)
-    ax.set_ylim(values.min()-100, values.max()+100)
+    ax.set_xlim(trained_values.index.min()-10, trained_values.index.max()+10)
+    ax.set_ylim(trained_values.min()-100, trained_values.max()+100)
     plt.xticks(targets.index+1, targets.index+1)
 
     ax.legend(loc='best', fancybox=True, framealpha=0.5)
