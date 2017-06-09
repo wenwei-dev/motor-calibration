@@ -21,6 +21,7 @@ from mappers import DefaultMapper, TrainedMapper
 import traceback
 from train import trainMotor, plot_params, create_model, FIG_DIR
 from functools import partial
+import shutil
 
 logger = logging.getLogger(__name__)
 
@@ -42,6 +43,7 @@ class MainWindow(QtGui.QMainWindow):
             self.onSavedMotorValueTableWidgetContextMenu)
         self.ui.savedMotorValueTableWidget.itemDoubleClicked.connect(self.showPlot)
         self.ui.motorConfigTableWidget.cellChanged.connect(self.cellChanged)
+        self.ui.resetSavedMotorValuesButton.clicked.connect(self.resetSavedMotorValues)
 
         self.timer = QtCore.QTimer(self)
         self.timer.timeout.connect(self.updateView)
@@ -459,7 +461,7 @@ class MainWindow(QtGui.QMainWindow):
             return
 
         if not os.path.isfile(self.motor_value_filename):
-            names = [motor['name'] for motor in self.app.motors]
+            names = [str(motor['name']) for motor in self.app.motors]
             if not names:
                 logger.error("No motors loaded")
                 return
@@ -596,8 +598,10 @@ class MainWindow(QtGui.QMainWindow):
 
         self.training = False
         self.ui.trainButton.setEnabled(not self.training)
+        self.plot()
 
     def plot(self):
+        shutil.rmtree(FIG_DIR)
         for motor in self.app.motors:
             shapekeys = self.model_df.index[:-1]
             try:
@@ -606,7 +610,7 @@ class MainWindow(QtGui.QMainWindow):
                 logger.warn("Motor {} has no model".format(motor['name']))
                 continue
             plot_params(motor, self.frames[shapekeys], x,
-                self.saved_motor_values_df[motor['name']])
+                self.saved_motor_values_df[str(motor['name'])])
 
     def clearMotorValues(self):
         frame = self.ui.frameSlider.value()
@@ -629,3 +633,14 @@ class MainWindow(QtGui.QMainWindow):
                     target = "nan"
                 value_item = self.ui.savedMotorValueTableWidget.item(row, 1)
                 value_item.setText(target)
+
+    def resetSavedMotorValues(self):
+        names = [str(motor['name']) for motor in self.app.motors]
+        total_frames = self.frames.shape[0]
+        self.saved_motor_values_df = pd.DataFrame(
+            np.nan, index=np.arange(total_frames), columns=names)
+        self.saved_motor_values_df.to_csv(self.motor_value_filename, index=False)
+        for row in range(self.ui.savedMotorValueTableWidget.rowCount()):
+            value_item = self.ui.savedMotorValueTableWidget.item(row, 1)
+            value_item.setText('nan')
+        logger.info("Motor targets are reset")

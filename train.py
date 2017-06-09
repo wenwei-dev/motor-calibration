@@ -133,7 +133,7 @@ def plot_params(motor, shapekey_values, x, targets):
     plt.xticks(targets.index, targets.index, rotation='vertical')
 
     ax.legend(loc='best', fancybox=True, framealpha=0.5)
-    fig_fname = '{}.png'.format(os.path.join(FIG_DIR, motor['name']))
+    fig_fname = '{}.png'.format(os.path.join(FIG_DIR, str(motor['name'])))
     if not os.path.isdir(os.path.dirname(fig_fname)):
         os.makedirs(os.path.dirname(fig_fname))
     fig.savefig(fig_fname)
