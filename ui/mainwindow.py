@@ -2,7 +2,7 @@
 
 # Form implementation generated from reading ui file 'ui/mainwindow.ui'
 #
-# Created: Thu Jun  8 16:31:51 2017
+# Created: Fri Jun  9 20:45:43 2017
 #      by: PyQt4 UI code generator 4.10.4
 #
 # WARNING! All changes made in this file will be lost!
@@ -319,6 +319,7 @@ class Ui_MainWindow(object):
         self.defaultMapperButton.setText(_translate("MainWindow", "Default Mapper", None))
         self.trainedMapperButton.setText(_translate("MainWindow", "Trained Mapper", None))
         self.saveMotorValuesButton.setText(_translate("MainWindow", "Save Motor Values", None))
+        self.saveMotorValuesButton.setShortcut(_translate("MainWindow", "Ctrl+S", None))
         self.enablePlayMotorsCheckBox.setText(_translate("MainWindow", "Enable Motors", None))
         item = self.motorValueTableWidget.horizontalHeaderItem(0)
         item.setText(_translate("MainWindow", "Motor Name", None))
