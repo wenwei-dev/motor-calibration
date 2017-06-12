@@ -24,6 +24,8 @@ from functools import partial
 import shutil
 
 logger = logging.getLogger(__name__)
+CWD = os.path.abspath(os.path.dirname(__name__))
+DATA_DIR = os.path.join(CWD, 'data')
 
 class MainWindow(QtGui.QMainWindow):
     def __init__(self, parent=None):
@@ -80,13 +82,17 @@ class MainWindow(QtGui.QMainWindow):
         self.ui.pauValueTableWidget.setColumnCount(2)
         self.ui.frameSlider.valueChanged.connect(self.playPAU)
 
+        self.training = False
         self.frames = None
         self.frame_filename = None
         self.motor_value_filename = None
         self.saved_motor_values_df = None
         self.model_df = create_model()
-        self.model_file = '/tmp/mapping_model.csv'
-        self.training = False
+        self.model_file = os.path.join(DATA_DIR, 'model.csv')
+        self.motor_value_filename = os.path.join(DATA_DIR, 'motor-targets.csv')
+        if os.path.isfile(self.model_file):
+            self.model_df = pd.read_csv(self.model_file, index_col=0)
+            logger.info("Load model file {}".format(self.model_file))
 
         self.motor_value_thread = threading.Thread(target=self.readMotorValues)
         self.motor_value_thread.daemon = True
@@ -110,7 +116,6 @@ class MainWindow(QtGui.QMainWindow):
         self.ui.plotButton.clicked.connect(self.plot)
 
         self.load_motor_settings('/home/wenwei/workspace/hansonrobotics/motor-controller/motors_settings.yaml')
-        self.load_frames('/home/wenwei/workspace/hansonrobotics/motor-controller/data/shkey_frame_data.csv')
 
     def enableConfigMotors(self, state):
         self.configMotorCheckState = state
@@ -155,9 +160,11 @@ class MainWindow(QtGui.QMainWindow):
         dialog.fileSelected.connect(self.save_motor_settings)
 
     def load_frame_dialog(self):
-        dialog = QtGui.QFileDialog(self, filter='*.csv')
+        dialog = QtGui.QFileDialog(self,
+            directory=os.path.join(CWD, 'data'), filter='*.csv')
+        dialog.setFileMode(QtGui.QFileDialog.ExistingFiles)
         dialog.show()
-        dialog.fileSelected.connect(self.load_frames)
+        dialog.filesSelected.connect(self.load_frames)
 
     def saveMotors(self):
         for motor in self.getCurrentMotors():
@@ -439,16 +446,16 @@ class MainWindow(QtGui.QMainWindow):
     def closeEvent(self, event):
         os.killpg(self.blender_proc.pid, 2)
 
-    def load_frames(self, filename):
-        self.frames = pd.read_csv(filename)
-        self.frame_filename = filename
-        self.motor_value_filename = '{}-motors.csv'.format(
-            os.path.splitext(self.frame_filename)[0])
-        self.model_file = '{}-model.csv'.format(
-            os.path.splitext(self.frame_filename)[0])
-        if os.path.isfile(self.model_file):
-            self.model_df = pd.read_csv(self.model_file, index_col=0)
-            logger.info("Load model file {}".format(self.model_file))
+    def load_frames(self, filenames):
+        dfs = []
+        for filename in filenames:
+            df = pd.read_csv(str(filename))
+            dfs.append(df)
+        self.frames = pd.concat(dfs, ignore_index=True)
+        if self.frames.shape[1] != len(SHAPE_KEYS):
+            self.frames = None
+            logger.error("Frame data dimision is incorrect")
+            return
 
         self.ui.frameSlider.setEnabled(True)
         self.ui.frameSlider.setMinimum(0)
@@ -456,9 +463,6 @@ class MainWindow(QtGui.QMainWindow):
         self.ui.frameSpinBox.setEnabled(True)
         self.ui.frameSpinBox.setMinimum(0)
         self.ui.frameSpinBox.setMaximum(self.frames.shape[0]-1)
-        if self.frames.shape[1] != len(SHAPE_KEYS):
-            logger.error("Frame data dimision is incorrect")
-            return
 
         if not os.path.isfile(self.motor_value_filename):
             names = [str(motor['name']) for motor in self.app.motors]
