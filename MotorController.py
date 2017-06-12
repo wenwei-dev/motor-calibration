@@ -49,7 +49,7 @@ class MotorController(object):
         if self.controller is None:
             try:
                 if self.hardware == 'pololu':
-                    self.controller = Maestro(self.device, readTimeout=0.05)
+                    self.controller = Maestro(self.device, readTimeout=0.05, log=logger)
                     logger.info("Pololu controller {} is initialized".format(self.device))
                 elif self.hardware == 'dynamixel':
                     self.controller = dynamixel_io.DynamixelIO(self.device, 1000000)
@@ -99,6 +99,7 @@ class MotorController(object):
                 self.controller.setTarget(id, value)
             elif self.hardware == 'dynamixel':
                 self.controller.set_position(id, value)
+            logger.info("Set motor {} target {}".format(id, value))
         except dynamixel_io.DroppedPacketError as ex:
             logger.warn("Error in setting target for motor {}, {}".format(id, ex))
         except Exception as ex:

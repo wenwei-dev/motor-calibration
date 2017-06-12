@@ -54,7 +54,7 @@ class MotorValueEditor(QtGui.QWidget):
             controller = self.app.motor_controllers[device]
             return controller
         else:
-            logger.debug("Can't get controller {}".format(self.app.motor_controllers))
+            logger.debug("Can't get controller {}".format(device))
 
     def sliderValueChanged(self, value):
         value = value/4.0

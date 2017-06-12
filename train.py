@@ -12,7 +12,8 @@ import traceback
 from mappers import DefaultMapper, TrainedMapper
 from configs import Configs
 
-ALL_SHAPEKEYS = 'brow_center_DN,brow_center_UP,brow_inner_DN.L,brow_inner_DN.R,brow_inner_UP.L,brow_inner_UP.R,brow_outer_DN.L,brow_outer_DN.R,brow_outer_UP.L,brow_outer_up.R,eye-blink.LO.L,eye-blink.LO.R,eye-blink.UP.L,eye-blink.UP.R,eye-flare.LO.L,eye-flare.LO.R,eye-flare.UP.L,eye-flare.UP.R,eyes-look.dn,eyes-look.up,jaw,lip-DN.C.DN,lip-DN.C.UP,lip-DN.L.DN,lip-DN.L.UP,lip-DN.R.DN,lip-JAW.DN,lip-UP.C.DN,lip-UP.C.UP,lip-UP.L.DN,lip-UP.L.UP,lip-UP.R.DN,lip-UP.R.UP,lip.DN.R.UP,lips-frown.L,lips-frown.R,lips-narrow.L,lips-narrow.R,lips-smile.L,lips-smile.R,lips-wide.L,lips-wide.R,sneer.L,sneer.R,wince.L,wince.R'.split(',')
+#ALL_SHAPEKEYS = 'brow_center_DN,brow_center_UP,brow_inner_DN.L,brow_inner_DN.R,brow_inner_UP.L,brow_inner_UP.R,brow_outer_DN.L,brow_outer_DN.R,brow_outer_UP.L,brow_outer_up.R,eye-blink.LO.L,eye-blink.LO.R,eye-blink.UP.L,eye-blink.UP.R,eye-flare.LO.L,eye-flare.LO.R,eye-flare.UP.L,eye-flare.UP.R,eyes-look.dn,eyes-look.up,jaw,lip-DN.C.DN,lip-DN.C.UP,lip-DN.L.DN,lip-DN.L.UP,lip-DN.R.DN,lip-JAW.DN,lip-UP.C.DN,lip-UP.C.UP,lip-UP.L.DN,lip-UP.L.UP,lip-UP.R.DN,lip-UP.R.UP,lip.DN.R.UP,lips-frown.L,lips-frown.R,lips-narrow.L,lips-narrow.R,lips-smile.L,lips-smile.R,lips-wide.L,lips-wide.R,sneer.L,sneer.R,wince.L,wince.R'.split(',')
+ALL_SHAPEKEYS = 'brow_center_DN,brow_center_UP,brow_inner_DN.L,brow_inner_DN.R,brow_inner_UP.L,brow_inner_UP.R,brow_outer_DN.L,brow_outer_DN.R,brow_outer_UP.L,brow_outer_up.R,eye-blink.LO.L,eye-blink.LO.R,eye-blink.UP.L,eye-blink.UP.R,eye-flare.LO.L,eye-flare.LO.R,eye-flare.UP.L,eye-flare.UP.R,eyes-look.dn,eyes-look.up,jaw,lip-DN.C.DN,lip-DN.C.UP,lip-DN.L.DN,lip-DN.L.UP,lip-DN.R.DN,lip-JAW.DN,lip-UP.C.DN,lip-UP.C.UP,lip-UP.L.DN,lip-UP.L.UP,lip-UP.R.DN,lip-UP.R.UP,lip-DN.R.UP,lips-frown.L,lips-frown.R,lips-narrow.L,lips-narrow.R,lips-smile.L,lips-smile.R,lips-wide.L,lips-wide.R,sneer.L,sneer.R,wince.L,wince.R'.split(',') # lip.DN.R.UP -> lip-DN.R.UP
 
 logger = logging.getLogger(__name__)
 FIG_DIR = 'figs'
@@ -34,6 +35,7 @@ def find_params(shapekey_values, targets):
         sum = x[:param_num]*shapekey_values + x[-1]
         diff = sum.sum(axis=1)-targets
         mse = (diff**2).sum()
+        print mse
         return mse
 
     bounds = [(-1, 1)]*(param_num+1)
@@ -79,11 +81,11 @@ def run(motor_config_file, pau_data_file, motor_data_file, model_file):
     params_df.to_csv(model_file)
 
 def trainMotor(motor, targets, frames):
-    motor_name = str(motor['name'])
-    targets = targets[motor_name]
-    norm_targets = (targets - motor['init'])/(motor['max'] - motor['min'])
-    pau_values = frames[ALL_SHAPEKEYS]
     try:
+        motor_name = str(motor['name'])
+        targets = targets[motor_name]
+        norm_targets = (targets - motor['init'])/(motor['max'] - motor['min'])
+        pau_values = frames[ALL_SHAPEKEYS]
         res = find_params(pau_values, norm_targets)
         if res.success:
             logger.info("Training {} Success, {}".format(motor_name, res.message))
@@ -91,7 +93,8 @@ def trainMotor(motor, targets, frames):
             logger.warn("Trainig {} Fail, {}".format(motor_name, res.message))
         return res.x
     except Exception as ex:
-        pass
+        logger.error(ex)
+        return None
 
 def plot_params(motor, shapekey_values, x, targets):
     import matplotlib.pyplot as plt

@@ -84,7 +84,7 @@ class MainWindow(QtGui.QMainWindow):
 
         self.training = False
         self.frames = None
-        self.frame_filename = None
+        self.frame_filename = os.path.join(DATA_DIR, 'shapekey-frames.csv')
         self.motor_value_filename = None
         self.saved_motor_values_df = None
         self.model_df = create_model()
@@ -456,6 +456,7 @@ class MainWindow(QtGui.QMainWindow):
             self.frames = None
             logger.error("Frame data dimision is incorrect")
             return
+        self.frames.to_csv(self.frame_filename, index=False)
 
         self.ui.frameSlider.setEnabled(True)
         self.ui.frameSlider.setMinimum(0)
@@ -578,11 +579,14 @@ class MainWindow(QtGui.QMainWindow):
                 value_item.setText(target)
 
     def trainModel(self):
-        self.training = True
-        self.ui.trainButton.setEnabled(not self.training)
-        thread = threading.Thread(target=self._trainModel)
-        thread.daemon = True
-        thread.start()
+        if self.frames is not None:
+            self.training = True
+            self.ui.trainButton.setEnabled(not self.training)
+            thread = threading.Thread(target=self._trainModel)
+            thread.daemon = True
+            thread.start()
+        else:
+            logger.warn("No frame data")
 
     def _trainModel(self):
         pool = Pool(6)
@@ -605,16 +609,20 @@ class MainWindow(QtGui.QMainWindow):
         self.plot()
 
     def plot(self):
-        shutil.rmtree(FIG_DIR)
-        for motor in self.app.motors:
-            shapekeys = self.model_df.index[:-1]
-            try:
-                x = self.model_df[motor['name']]
-            except KeyError as ex:
-                logger.warn("Motor {} has no model".format(motor['name']))
-                continue
-            plot_params(motor, self.frames[shapekeys], x,
-                self.saved_motor_values_df[str(motor['name'])])
+        if self.frames is not None:
+            if os.path.isdir(FIG_DIR):
+                shutil.rmtree(FIG_DIR)
+            for motor in self.app.motors:
+                shapekeys = self.model_df.index[:-1]
+                try:
+                    x = self.model_df[motor['name']]
+                except KeyError as ex:
+                    logger.warn("Motor {} has no model".format(motor['name']))
+                    continue
+                plot_params(motor, self.frames[shapekeys], x,
+                    self.saved_motor_values_df[str(motor['name'])])
+        else:
+            logger.error("No frame data")
 
     def clearMotorValues(self):
         frame = self.ui.frameSlider.value()
