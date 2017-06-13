@@ -13,6 +13,7 @@ class ChannelInfo(object):
     def __init__(self, id):
         self.id = id
         self.position = None
+        self.target_position = None
         self.speed = None
         self.acceleration = None
         self.target = None
@@ -97,9 +98,13 @@ class MotorController(object):
         try:
             if self.hardware == 'pololu':
                 self.controller.setTarget(id, value)
+                if id in self.channels:
+                    self.channels[id].target_position = value/4
             elif self.hardware == 'dynamixel':
                 self.controller.set_position(id, value)
-            logger.info("Set motor {} target {}".format(id, value))
+                if id in self.channels:
+                    self.channels[id].target_position = value
+            logger.info("Set motor {} target {} (1/4={})".format(id, value, value/4))
         except dynamixel_io.DroppedPacketError as ex:
             logger.warn("Error in setting target for motor {}, {}".format(id, ex))
         except Exception as ex:
@@ -122,6 +127,10 @@ class MotorController(object):
                 logger.warn("Dynamixel doesn't support acceleration")
         except Exception as ex:
             logger.error(traceback.format_exc())
+
+    def getChannelInfo(self, id):
+        if id in self.channels:
+            return self.channels[id]
 
     def getPosition(self, id):
         if id in self.channels:

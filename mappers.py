@@ -1,7 +1,7 @@
 import logging
 import math
 import pandas as pd
-from pau2motors import MapperFactory
+import MapperFactory
 
 logger = logging.getLogger(__name__)
 

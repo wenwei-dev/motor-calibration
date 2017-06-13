@@ -429,8 +429,9 @@ class MainWindow(QtGui.QMainWindow):
                 device = str(motor['device'])
                 controller = self.app.motor_controllers.get(device)
                 if controller is not None:
-                    position = controller.getPosition(motor['motor_id'])
-                    motor['current_pos'] = position
+                    channel = controller.getChannelInfo(int(motor['motor_id']))
+                    motor['current_pos'] = channel.position
+                    motor['current_target_pos'] = channel.target_position
             time.sleep(0.1)
 
     def showMotorValues(self):
@@ -531,7 +532,6 @@ class MainWindow(QtGui.QMainWindow):
                     target = str(target)
                 except Exception as ex:
                     logger.warn("Can't get target, {}".format(ex))
-                    print self.targets
                     target = "nan"
                 value_item = self.ui.savedMotorValueTableWidget.item(row, 1)
                 value_item.setText(target)
@@ -578,7 +578,7 @@ class MainWindow(QtGui.QMainWindow):
         frame_df = self.frames.get(name)
         frame = self.ui.frameSlider.value()
         if frame_df is not None and frame < frame_df.shape[0]:
-            motor_positions = [motor.get('current_pos', np.nan) for motor in self.app.motors]
+            motor_positions = [motor.get('current_target_pos', np.nan) for motor in self.app.motors]
             target_df = self.targets[name]
             target_filename = os.path.join(TARGET_DIR, name)
             target_df.iloc[frame] = motor_positions
@@ -600,6 +600,8 @@ class MainWindow(QtGui.QMainWindow):
 
     def trainModel(self):
         if self.frames:
+            if os.path.isdir(FIG_DIR):
+                shutil.rmtree(FIG_DIR)
             self.training = True
             self.ui.trainButton.setEnabled(not self.training)
             thread = threading.Thread(target=self._trainModel)
@@ -630,7 +632,6 @@ class MainWindow(QtGui.QMainWindow):
 
         self.training = False
         self.ui.trainButton.setEnabled(not self.training)
-        self.plot()
 
     def plot(self):
         if self.frames:

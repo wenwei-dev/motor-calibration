@@ -112,6 +112,8 @@ class MotorValueEditor(QtGui.QWidget):
                     controller.setSpeed(motor_id, int(self.motor['speed']))
                     controller.setTarget(motor_id, int(value*4))
                 logger.debug("Set motor {}({}) position {}".format(self.motor['name'], motor_id, value))
+            else:
+                logger.warn("Motor controller is None")
 
     def getValue(self):
         return self.ui.motorValueDoubleSpinBox.value()

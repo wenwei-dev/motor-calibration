@@ -73,7 +73,7 @@ def run(motor_config_file, pau_data_file, targets_file, model_file):
         try:
             res = find_params(pau_values[shapekeys], norm_targets)
             params_df[motor_name] = res.x
-            plot_params(motor, {"frames": pau_values}, shapekeys, res.x, {"frames": motor_targets})
+            plot_params(motor, {"frames": pau_values}, shapekeys, res.x, {"frames": targets})
         except Exception as ex:
             logger.warn(ex)
             logger.warn(traceback.format_exc())
@@ -104,17 +104,17 @@ def plot_params(motor, frames, shapekeys, x, targets):
     default_mapper = DefaultMapper(motor_entry)
     trained_mapper = TrainedMapper(motor_entry)
 
+    motor_name = str(motor['name'])
     num_figs = len(frames.keys())
     fig, axarr = plt.subplots(num_figs, figsize=(12, 4*num_figs))
-    plt.suptitle('Motor Name {}'.format(motor['name']))
+    plt.suptitle('Motor Name {}'.format(motor_name))
     if not hasattr(axarr, '__iter__'):
         axarr = [axarr]
     count = 0
 
     for name, shapekey_values in frames.iteritems():
+        name = str(name)
         ax = axarr[count]
-        ax.set_xlabel(name)
-        ax.set_ylabel('Motor Value')
 
         param_num = shapekey_values.shape[1]
         row_num = shapekey_values.shape[0]
@@ -131,8 +131,10 @@ def plot_params(motor, frames, shapekeys, x, targets):
             default_values.set_value(row, default_value)
             trained_values.set_value(row, trained_value)
 
-        target_values = targets[name][motor['name']]
+        target_values = targets[name][motor_name]
+
         target_values = target_values.dropna()
+
         ax.plot(default_values.index, default_values, 'go', label='original evaluates', alpha=0.6, ms=3)
         ax.plot(trained_values.index, trained_values, 'bo', label='optimized evaluates', alpha=0.6, ms=3)
         ax.plot(target_values.index, target_values, 'ro', label='targets', alpha=0.6, ms=6)
@@ -145,9 +147,14 @@ def plot_params(motor, frames, shapekeys, x, targets):
         ax.set_xlim(trained_values.index.min()-10, trained_values.index.max()+10)
         ax.set_ylim(min(default_values.min(), trained_values.min())-100,
                     max(default_values.max(), trained_values.max())+100)
+
+        error = target_values-trained_values
+        mse = (error**2).sum()/error.shape[0]
+        ax.set_xlabel('{} MSE: {}'.format(os.path.splitext(name)[0], mse))
+        ax.set_ylabel('Motor Value')
         count += 1
 
-    fig_fname = '{}.png'.format(os.path.join(FIG_DIR, str(motor['name'])))
+    fig_fname = '{}.png'.format(os.path.join(FIG_DIR, motor_name))
     if not os.path.isdir(os.path.dirname(fig_fname)):
         os.makedirs(os.path.dirname(fig_fname))
     fig.tight_layout()
