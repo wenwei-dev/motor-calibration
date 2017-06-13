@@ -2,6 +2,7 @@ import logging
 import math
 import pandas as pd
 import MapperFactory
+import numpy as np
 
 logger = logging.getLogger(__name__)
 
@@ -34,6 +35,8 @@ class DefaultMapper(BaseMapper):
         angle = self.mapper.map(coeff)
         angle = self._saturated(angle)
         pos = self.angle2pulse(angle)
+        if np.isnan(pos):
+            logger.warn("Nan mapping value, key {}, coeff {}".format(keys, coeff.values))
         return pos
 
 class TrainedMapper(BaseMapper):
@@ -53,6 +56,8 @@ class TrainedMapper(BaseMapper):
         sum = x[:param_num]*coeff + x[-1]
         angle = sum.sum()
         pos = self.angle2pulse(angle)
+        if np.isnan(pos):
+            logger.warn("Nan mapping value, x {}, coeff {}".format(x, coeff))
         return pos
 
     def map(self, msg):

@@ -115,7 +115,7 @@ class MainWindow(QtGui.QMainWindow):
         self.ui.trainButton.clicked.connect(self.trainModel)
         self.ui.plotButton.clicked.connect(self.plot)
 
-        self.load_motor_settings('/home/wenwei/workspace/hansonrobotics/motor-calibration/motors_settings.yaml')
+        self.load_motor_settings(os.path.join(DATA_DIR, 'motors_settings.yaml')
 
     def enableConfigMotors(self, state):
         self.configMotorCheckState = state
@@ -659,18 +659,20 @@ class MainWindow(QtGui.QMainWindow):
         if self.frames:
             if os.path.isdir(FIG_DIR):
                 shutil.rmtree(FIG_DIR)
-            for motor in self.app.motors:
-                motor_name = str(motor['name'])
-                shapekeys = self.model_df.index[:-1]
-                try:
-                    x = self.model_df[motor_name]
-                except KeyError as ex:
-                    logger.warn("Motor {} has no model".format(motor_name))
-                    continue
-                plot_params(motor, self.frames, shapekeys, x,
-                    self.targets)
+            self._plot()
         else:
             logger.error("No frame data")
+
+    def _plot(self):
+        self.ui.plotButton.setEnabled(False)
+        pool = Pool(6)
+        results = pool.map(
+            partial(plot_params, frames=self.frames, model_df=self.model_df, targets=self.targets),
+            self.app.motors)
+        pool.close()
+        pool.join()
+        self.ui.plotButton.setEnabled(True)
+        logger.info("Plotting is finished")
 
     def clearMotorValues(self):
         name = str(self.ui.shapekeyComboBox.currentText())

@@ -379,7 +379,7 @@
   name: Brow-Outer-R
   other_func: null
   parser: fsshapekey
-  parser_param: brow_outer_UP.R;brow_outer_DN.R
+  parser_param: brow_outer_up.R;brow_outer_DN.R
   sort_no: 5
   speed: 0.3
   topic: head
