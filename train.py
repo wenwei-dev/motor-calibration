@@ -128,7 +128,6 @@ def plot_params(motor, frames, shapekeys, x, targets):
             trained_values.set_value(row, trained_value)
 
         target_values = targets[name][motor_name]
-
         target_values = target_values.dropna()
 
         ax.plot(default_values.index, default_values, 'go', label='original evaluates', alpha=0.6, ms=3)

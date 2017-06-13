@@ -104,11 +104,13 @@ class MotorController(object):
                 self.controller.setTarget(id, value)
                 if id in self.channels:
                     self.channels[id].target_position = value/4
+                    logger.info("Set channel {} target {}".format(id, value/4))
+                else:
+                    logger.warn("Can't set channel {} target {}".format(id, value/4))
             elif self.hardware == 'dynamixel':
                 self.controller.set_position(id, value)
                 if id in self.channels:
                     self.channels[id].target_position = value
-            logger.info("Set motor {} target {} (1/4={})".format(id, value, value/4))
         except dynamixel_io.DroppedPacketError as ex:
             logger.warn("Error in setting target for motor {}, {}".format(id, ex))
         except Exception as ex:

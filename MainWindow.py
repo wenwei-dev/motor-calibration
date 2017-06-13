@@ -131,6 +131,9 @@ class MainWindow(QtGui.QMainWindow):
             widget = self.ui.motorValueTableWidget.cellWidget(row, 2)
             if widget:
                 widget.ui.enableCheckBox.setCheckState(self.playMotorCheckState)
+        self.ui.saveMotorValuesButton.setEnabled(state!=QtCore.Qt.Unchecked)
+        if state!=QtCore.Qt.Unchecked:
+            self.playPAU(self.ui.frameSlider.value())
 
     def init_menu(self):
         self.treeMenu = QtGui.QMenu(self.ui.treeView)
@@ -441,10 +444,13 @@ class MainWindow(QtGui.QMainWindow):
                     motor['name'], QtCore.Qt.MatchExactly)
                 position = motor.get('current_pos')
                 if position is not None and item is not None:
-                    motor_item = item[0]
-                    row = motor_item.row()
-                    value_item = self.ui.motorMonitorTableWidget.item(row, 1)
-                    value_item.setData(QtCore.Qt.DisplayRole, position)
+                    try:
+                        motor_item = item[0]
+                        row = motor_item.row()
+                        value_item = self.ui.motorMonitorTableWidget.item(row, 1)
+                        value_item.setData(QtCore.Qt.DisplayRole, position)
+                    except Exception as ex:
+                        logger.error("Updating motor current position error, {}".format(ex))
             time.sleep(0.1)
 
     def closeEvent(self, event):
@@ -500,6 +506,7 @@ class MainWindow(QtGui.QMainWindow):
                 self.playPAU(self.ui.frameSlider.value())
 
     def playPAU(self, frame):
+        logger.info("Play PAU frame {}".format(frame))
         name = str(self.ui.shapekeyComboBox.currentText())
         frame_df = self.frames.get(name)
         if frame_df is not None and frame < frame_df.shape[0]:
@@ -532,12 +539,18 @@ class MainWindow(QtGui.QMainWindow):
                     target = str(target)
                 except Exception as ex:
                     logger.warn("Can't get target, {}".format(ex))
+                    logger.warn(traceback.format_exc())
                     target = "nan"
                 value_item = self.ui.savedMotorValueTableWidget.item(row, 1)
                 value_item.setText(target)
 
             if self.motor_configs is not None:
                 for row, motor in enumerate(self.motor_configs.motors):
+                    item = self.ui.motorValueTableWidget.findItems(
+                        motor['name'], QtCore.Qt.MatchExactly)
+                    if not item:
+                        continue
+
                     mapper = None
                     try:
                         if str(self.button_group.checkedButton().text()) == 'Default Mapper':
@@ -549,27 +562,31 @@ class MainWindow(QtGui.QMainWindow):
                             logger.error("No motor mapper for {}".format(motor['name']))
                             continue
                     except Exception as ex:
-                        logger.debug("Can't initilize mapper for motor {}, error {}".format(motor['name'], ex))
+                        logger.debug("Create mapper for motor {}, error {}".format(motor['name'], ex))
+                        logger.debug(traceback.format_exc())
                     if mapper is not None:
                         try:
                             value = mapper.map(m_coeffs)
-                            value = value.item()
+                            if hasattr(value, 'item'): # convert numpy float to python native float
+                                value = value.item()
                         except Exception as ex:
-                            logger.debug("Motor {} has no key {}".format(motor['name'], ex))
+                            logger.debug("Calculate mapper value for motor {}, error {}".format(motor['name'], ex))
+                            logger.debug(traceback.format_exc())
                             value = -1
                     else:
+                        logger.debug("Can't create mapper for {}".format(motor['name']))
                         value = -1
 
-                    item = self.ui.motorValueTableWidget.findItems(
-                        motor['name'], QtCore.Qt.MatchExactly)
-                    if item:
-                        motor_item = item[0]
-                        row = motor_item.row()
-                        value_item = self.ui.motorValueTableWidget.item(row, 1)
-                        value_item.setData(QtCore.Qt.DisplayRole, value)
-                        widget = self.ui.motorValueTableWidget.cellWidget(row, 2)
-                        if widget and value != -1:
-                            widget.ui.motorValueDoubleSpinBox.setValue(value)
+                    # Set motor target
+                    motor_item = item[0]
+                    row = motor_item.row()
+                    value_item = self.ui.motorValueTableWidget.item(row, 1)
+                    value_item.setData(QtCore.Qt.DisplayRole, value)
+                    widget = self.ui.motorValueTableWidget.cellWidget(row, 2)
+                    logger.info("Set motor {} target {}".format(motor['name'], value))
+                    if widget and value != -1:
+                        widget.ui.motorValueDoubleSpinBox.setValue(value)
+                        widget.setMotorTarget(value)
             else:
                 logger.error("No motor configs")
 
@@ -583,6 +600,7 @@ class MainWindow(QtGui.QMainWindow):
             target_filename = os.path.join(TARGET_DIR, name)
             target_df.iloc[frame] = motor_positions
             target_df.to_csv(target_filename, index=False)
+            logger.info("Update motor target file {}".format(target_filename))
 
             # Update Saved motor value
             for row, motor in enumerate(self.app.motors):
@@ -621,15 +639,19 @@ class MainWindow(QtGui.QMainWindow):
             self.app.motors)
         pool.close()
         pool.join()
+        model_updated = False
         for motor, x in zip(self.app.motors, params):
             if x is not None:
                 motor_name = str(motor['name'])
                 self.model_df[motor_name] = x
-        self.model_df.to_csv(self.model_file)
+                model_updated = True
+        if model_updated:
+            self.model_df.to_csv(self.model_file)
+            logger.info("Saved model to {}".format(self.model_file))
+        else:
+            logger.info("No model is generated")
 
-        logger.info("Save model to {}".format(self.model_file))
         logger.info("Training is finished")
-
         self.training = False
         self.ui.trainButton.setEnabled(not self.training)
 
@@ -638,11 +660,12 @@ class MainWindow(QtGui.QMainWindow):
             if os.path.isdir(FIG_DIR):
                 shutil.rmtree(FIG_DIR)
             for motor in self.app.motors:
+                motor_name = str(motor['name'])
                 shapekeys = self.model_df.index[:-1]
                 try:
-                    x = self.model_df[motor['name']]
+                    x = self.model_df[motor_name]
                 except KeyError as ex:
-                    logger.warn("Motor {} has no model".format(motor['name']))
+                    logger.warn("Motor {} has no model".format(motor_name))
                     continue
                 plot_params(motor, self.frames, shapekeys, x,
                     self.targets)
@@ -659,6 +682,7 @@ class MainWindow(QtGui.QMainWindow):
             target_filename = os.path.join(TARGET_DIR, name)
             target_df.iloc[frame] = motor_positions
             target_df.to_csv(target_filename, index=False)
+            logger.info("Update motor target file {}".format(target_filename))
 
             # Update Saved motor value
             for row, motor in enumerate(self.app.motors):
@@ -682,6 +706,7 @@ class MainWindow(QtGui.QMainWindow):
             target_df = pd.DataFrame(
                 np.nan, index=np.arange(n_frames), columns=motor_names)
             target_df.to_csv(target_filename, index=False)
+            logger.info("Update motor target file {}".format(target_filename))
             self.targets[name] = target_df
 
         for row in range(self.ui.savedMotorValueTableWidget.rowCount()):

@@ -2,7 +2,7 @@
 
 # Form implementation generated from reading ui file 'ui/mainwindow.ui'
 #
-# Created: Tue Jun 13 12:45:12 2017
+# Created: Tue Jun 13 17:07:45 2017
 #      by: PyQt4 UI code generator 4.10.4
 #
 # WARNING! All changes made in this file will be lost!
@@ -124,14 +124,17 @@ class Ui_MainWindow(object):
         self.horizontalLayout_3 = QtGui.QHBoxLayout()
         self.horizontalLayout_3.setObjectName(_fromUtf8("horizontalLayout_3"))
         self.trainButton = QtGui.QPushButton(self.frame_2)
+        self.trainButton.setFocusPolicy(QtCore.Qt.NoFocus)
         self.trainButton.setObjectName(_fromUtf8("trainButton"))
         self.horizontalLayout_3.addWidget(self.trainButton)
         self.plotButton = QtGui.QPushButton(self.frame_2)
+        self.plotButton.setFocusPolicy(QtCore.Qt.NoFocus)
         self.plotButton.setObjectName(_fromUtf8("plotButton"))
         self.horizontalLayout_3.addWidget(self.plotButton)
         spacerItem1 = QtGui.QSpacerItem(40, 20, QtGui.QSizePolicy.Expanding, QtGui.QSizePolicy.Minimum)
         self.horizontalLayout_3.addItem(spacerItem1)
         self.resetSavedMotorValuesButton = QtGui.QPushButton(self.frame_2)
+        self.resetSavedMotorValuesButton.setFocusPolicy(QtCore.Qt.NoFocus)
         self.resetSavedMotorValuesButton.setObjectName(_fromUtf8("resetSavedMotorValuesButton"))
         self.horizontalLayout_3.addWidget(self.resetSavedMotorValuesButton)
         self.verticalLayout_4.addLayout(self.horizontalLayout_3)
@@ -196,6 +199,7 @@ class Ui_MainWindow(object):
         spacerItem2 = QtGui.QSpacerItem(40, 20, QtGui.QSizePolicy.Expanding, QtGui.QSizePolicy.Minimum)
         self.horizontalLayout_6.addItem(spacerItem2)
         self.saveMotorValuesButton = QtGui.QPushButton(self.frame1)
+        self.saveMotorValuesButton.setEnabled(False)
         self.saveMotorValuesButton.setObjectName(_fromUtf8("saveMotorValuesButton"))
         self.horizontalLayout_6.addWidget(self.saveMotorValuesButton)
         self.enablePlayMotorsCheckBox = QtGui.QCheckBox(self.frame1)
