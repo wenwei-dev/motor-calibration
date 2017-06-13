@@ -45,7 +45,7 @@ def find_params(shapekey_values, targets):
     if shapekey_values.shape[0] == 0 or targets.shape[0] == 0:
         raise Exception('No data to train')
     res = minimize(
-        fun, [0.1]*param_num+[0], args=(shapekey_values, targets),
+        fun, [0.001]*param_num+[0], args=(shapekey_values, targets),
         method='L-BFGS-B', tol=1e-15, options={'disp': False}, bounds=bounds)
     return res
 

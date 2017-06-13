@@ -115,7 +115,7 @@ class MainWindow(QtGui.QMainWindow):
         self.ui.trainButton.clicked.connect(self.trainModel)
         self.ui.plotButton.clicked.connect(self.plot)
 
-        self.load_motor_settings(os.path.join(DATA_DIR, 'motors_settings.yaml')
+        self.load_motor_settings(os.path.join(DATA_DIR, 'motors_settings.yaml'))
 
     def enableConfigMotors(self, state):
         self.configMotorCheckState = state
