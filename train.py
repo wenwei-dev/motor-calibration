@@ -50,15 +50,15 @@ def find_params(shapekey_values, targets):
         method='L-BFGS-B', tol=1e-15, options={'disp': False}, bounds=bounds)
     return res
 
-def run(motor_config_file, pau_data_file, motor_data_file, model_file):
+def run(motor_config_file, pau_data_file, targets_file, model_file):
     pau_values = pd.read_csv(pau_data_file)
-    motor_data = pd.read_csv(motor_data_file)
+    targets = pd.read_csv(targets_file)
 
     with open(motor_config_file) as f:
         motor_configs = yaml.load(f)
 
     params_df = pd.DataFrame(index=ALL_SHAPEKEYS+['Const'])
-    motor_names = motor_data.columns.tolist()
+    motor_names = targets.columns.tolist()
     for motor_name in motor_names:
         try:
             motor = [motor for motor in motor_configs if motor['name'] == motor_name][0]
@@ -66,14 +66,14 @@ def run(motor_config_file, pau_data_file, motor_data_file, model_file):
             logger.warn('Motor is not found in configs'.format(motor_name))
             continue
 
-        targets = motor_data[motor['name']]
-        norm_targets = (targets - motor['init'])/(motor['max'] - motor['min'])
+        motor_targets = targets[motor['name']]
+        norm_targets = (motor_targets - motor['init'])/(motor['max'] - motor['min'])
 
         shapekeys = ALL_SHAPEKEYS
         try:
             res = find_params(pau_values[shapekeys], norm_targets)
             params_df[motor_name] = res.x
-            plot_params(motor, pau_values[shapekeys], res.x, targets)
+            plot_params(motor, {"frames": pau_values}, shapekeys, res.x, {"frames": motor_targets})
         except Exception as ex:
             logger.warn(ex)
             logger.warn(traceback.format_exc())
@@ -93,52 +93,65 @@ def trainMotor(motor, targets, frames):
             logger.warn("Trainig {} Fail, {}".format(motor_name, res.message))
         return res.x
     except Exception as ex:
-        logger.error(ex)
+        logger.error('Train motor {} error, {}'.format(motor['name'], ex))
         return None
 
-def plot_params(motor, shapekey_values, x, targets):
+def plot_params(motor, frames, shapekeys, x, targets):
     import matplotlib.pyplot as plt
     motor_configs = Configs()
     motor_entry = motor_configs.parseMotors([motor])
     motor_entry = motor_configs.motors[0]
-    param_num = shapekey_values.shape[1]
-    row_num = shapekey_values.shape[0]
-
     default_mapper = DefaultMapper(motor_entry)
     trained_mapper = TrainedMapper(motor_entry)
-    default_values = pd.Series(np.nan, index=np.arange(row_num))
-    trained_values = pd.Series(np.nan, index=np.arange(row_num))
 
-    for row, m_coeffs in shapekey_values.iterrows():
-        try:
-            default_value = default_mapper.map(m_coeffs)
-            trained_value = trained_mapper._map(m_coeffs, x)
-        except Exception as ex:
-            continue
-        default_values.set_value(row, default_value)
-        trained_values.set_value(row, trained_value)
+    num_figs = len(frames.keys())
+    fig, axarr = plt.subplots(num_figs, figsize=(12, 4*num_figs))
+    plt.suptitle('Motor Name {}'.format(motor['name']))
+    if not hasattr(axarr, '__iter__'):
+        axarr = [axarr]
+    count = 0
 
-    error = targets-trained_values
-    mse = (error**2).sum()
+    for name, shapekey_values in frames.iteritems():
+        ax = axarr[count]
+        ax.set_xlabel(name)
+        ax.set_ylabel('Motor Value')
 
-    fig, ax = plt.subplots()
-    ax.set_title('Motor Name {}, MSE {}'.format(motor['name'], mse))
-    ax.set_xlabel('Frame')
-    ax.set_ylabel('Motor Value')
-    targets = targets.dropna()
-    ax.plot(default_values.index, default_values, 'go', label='original evaluates', alpha=0.6, ms=3)
-    ax.plot(trained_values.index, trained_values, 'bo', label='optimized evaluates', alpha=0.6, ms=3)
-    ax.plot(targets.index, targets, 'ro', label='targets', alpha=0.6, ms=6)
-    ax.vlines(targets.index, [0], targets, linestyles='dotted')
-    ax.set_xlim(trained_values.index.min()-10, trained_values.index.max()+10)
-    ax.set_ylim(min(default_values.min(), trained_values.min())-100,
-                max(default_values.max(), trained_values.max())+100)
-    plt.xticks(targets.index, targets.index, rotation='vertical')
+        param_num = shapekey_values.shape[1]
+        row_num = shapekey_values.shape[0]
 
-    ax.legend(loc='best', fancybox=True, framealpha=0.5)
+        default_values = pd.Series(np.nan, index=np.arange(row_num))
+        trained_values = pd.Series(np.nan, index=np.arange(row_num))
+
+        for row, m_coeffs in shapekey_values.iterrows():
+            try:
+                default_value = default_mapper.map(m_coeffs)
+                trained_value = trained_mapper._map(m_coeffs[ALL_SHAPEKEYS], x)
+            except Exception as ex:
+                continue
+            default_values.set_value(row, default_value)
+            trained_values.set_value(row, trained_value)
+
+        target_values = targets[name][motor['name']]
+        target_values = target_values.dropna()
+        ax.plot(default_values.index, default_values, 'go', label='original evaluates', alpha=0.6, ms=3)
+        ax.plot(trained_values.index, trained_values, 'bo', label='optimized evaluates', alpha=0.6, ms=3)
+        ax.plot(target_values.index, target_values, 'ro', label='targets', alpha=0.6, ms=6)
+        ax.vlines(target_values.index, [0], target_values, linestyles='dotted')
+        ax.legend(loc='best', fancybox=True, framealpha=0.5)
+        if not target_values.empty:
+            ax.set_xticks(target_values.index)
+            ax.set_xticklabels(target_values.index, rotation='vertical')
+        [t.set_rotation(90) for t in ax.xaxis.get_ticklabels()]
+        ax.set_xlim(trained_values.index.min()-10, trained_values.index.max()+10)
+        ax.set_ylim(min(default_values.min(), trained_values.min())-100,
+                    max(default_values.max(), trained_values.max())+100)
+        count += 1
+
     fig_fname = '{}.png'.format(os.path.join(FIG_DIR, str(motor['name'])))
     if not os.path.isdir(os.path.dirname(fig_fname)):
         os.makedirs(os.path.dirname(fig_fname))
+    fig.tight_layout()
+    fig.subplots_adjust(top=0.95)
     fig.savefig(fig_fname)
     plt.close()
     logger.info("Saved fig to {}".format(fig_fname))
@@ -149,7 +162,7 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('-m, --motor-config-file', dest='motor_config_file', required=True)
     parser.add_argument('-s, --shapekey-frame-file', dest='shapekey_frame_file', required=True)
-    parser.add_argument('-d, --motor-data-file', dest='motor_data_file', required=True)
+    parser.add_argument('-t, --targets-file', dest='targets_file', required=True)
     parser.add_argument('-o, --output-model-file', dest='model_file', required=True)
     options = parser.parse_args()
-    run(options.motor_config_file, options.shapekey_frame_file, options.motor_data_file, options.model_file)
+    run(options.motor_config_file, options.shapekey_frame_file, options.targets_file, options.model_file)

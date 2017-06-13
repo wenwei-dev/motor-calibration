@@ -2,7 +2,7 @@
 
 # Form implementation generated from reading ui file 'ui/mainwindow.ui'
 #
-# Created: Fri Jun  9 21:39:46 2017
+# Created: Tue Jun 13 12:45:12 2017
 #      by: PyQt4 UI code generator 4.10.4
 #
 # WARNING! All changes made in this file will be lost!
@@ -94,6 +94,9 @@ class Ui_MainWindow(object):
         self.loadFrameButton = QtGui.QPushButton(self.tab_2)
         self.loadFrameButton.setObjectName(_fromUtf8("loadFrameButton"))
         self.horizontalLayout.addWidget(self.loadFrameButton)
+        self.shapekeyComboBox = QtGui.QComboBox(self.tab_2)
+        self.shapekeyComboBox.setObjectName(_fromUtf8("shapekeyComboBox"))
+        self.horizontalLayout.addWidget(self.shapekeyComboBox)
         self.frameSlider = QtGui.QSlider(self.tab_2)
         self.frameSlider.setEnabled(False)
         self.frameSlider.setPageStep(10)
@@ -179,6 +182,7 @@ class Ui_MainWindow(object):
         self.verticalLayout_5 = QtGui.QVBoxLayout(self.frame1)
         self.verticalLayout_5.setObjectName(_fromUtf8("verticalLayout_5"))
         self.horizontalLayout_6 = QtGui.QHBoxLayout()
+        self.horizontalLayout_6.setSizeConstraint(QtGui.QLayout.SetNoConstraint)
         self.horizontalLayout_6.setObjectName(_fromUtf8("horizontalLayout_6"))
         self.defaultMapperButton = QtGui.QPushButton(self.frame1)
         self.defaultMapperButton.setCheckable(True)

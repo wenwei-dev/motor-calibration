@@ -141,6 +141,9 @@
            </widget>
           </item>
           <item>
+           <widget class="QComboBox" name="shapekeyComboBox"/>
+          </item>
+          <item>
            <widget class="QSlider" name="frameSlider">
             <property name="enabled">
              <bool>false</bool>
@@ -303,6 +306,9 @@
            <layout class="QVBoxLayout" name="verticalLayout_5">
             <item>
              <layout class="QHBoxLayout" name="horizontalLayout_6">
+              <property name="sizeConstraint">
+               <enum>QLayout::SetNoConstraint</enum>
+              </property>
               <item>
                <widget class="QPushButton" name="defaultMapperButton">
                 <property name="text">

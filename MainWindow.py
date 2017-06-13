@@ -26,6 +26,7 @@ import shutil
 logger = logging.getLogger(__name__)
 CWD = os.path.abspath(os.path.dirname(__name__))
 DATA_DIR = os.path.join(CWD, 'data')
+TARGET_DIR = os.path.join(DATA_DIR, 'targets')
 
 class MainWindow(QtGui.QMainWindow):
     def __init__(self, parent=None):
@@ -83,13 +84,12 @@ class MainWindow(QtGui.QMainWindow):
         self.ui.frameSlider.valueChanged.connect(self.playPAU)
 
         self.training = False
-        self.frames = None
+        self.frames = {}
+        self.frames_df = None
         self.frame_filename = os.path.join(DATA_DIR, 'shapekey-frames.csv')
-        self.motor_value_filename = None
-        self.saved_motor_values_df = None
+        self.targets = {}
         self.model_df = create_model()
         self.model_file = os.path.join(DATA_DIR, 'model.csv')
-        self.motor_value_filename = os.path.join(DATA_DIR, 'motor-targets.csv')
         if os.path.isfile(self.model_file):
             self.model_df = pd.read_csv(self.model_file, index_col=0)
             logger.info("Load model file {}".format(self.model_file))
@@ -145,6 +145,7 @@ class MainWindow(QtGui.QMainWindow):
         self.ui.resetButton.clicked.connect(self.resetMotors)
         self.ui.neutralButton.clicked.connect(self.neutralMotors)
         self.ui.loadFrameButton.clicked.connect(self.load_frame_dialog)
+        self.ui.shapekeyComboBox.currentIndexChanged.connect(self.load_frame)
 
     def close(self):
         super(MainWindow, self).close()
@@ -290,15 +291,17 @@ class MainWindow(QtGui.QMainWindow):
     def showPlot(self, item):
         motor = self.ui.savedMotorValueTableWidget.item(item.row(), 0)
         fig_file = os.path.join(FIG_DIR, '{}.png'.format(motor.text()))
+        fig = QtGui.QPixmap(fig_file)
+        dialog = QtGui.QDialog(self)
+        ui = Ui_Dialog()
+        ui.setupUi(dialog)
+        dialog.ui = ui
+        dialog.setModal(False)
         if os.path.isfile(fig_file):
-            fig = QtGui.QPixmap(fig_file)
-            dialog = QtGui.QDialog(self)
-            ui = Ui_Dialog()
-            ui.setupUi(dialog)
-            dialog.ui = ui
-            dialog.setModal(False)
             dialog.ui.figLabel.setPixmap(fig)
-            dialog.show()
+        else:
+            dialog.ui.figLabel.setText("No fig")
+        dialog.show()
 
     def load_motor_settings(self, filename):
         self.filename = filename
@@ -447,46 +450,59 @@ class MainWindow(QtGui.QMainWindow):
         os.killpg(self.blender_proc.pid, 2)
 
     def load_frames(self, filenames):
-        dfs = []
+        self.frames = {}
+        self.ui.shapekeyComboBox.clear()
         for filename in filenames:
-            df = pd.read_csv(str(filename))
-            dfs.append(df)
-        self.frames = pd.concat(dfs, ignore_index=True)
-        if self.frames.shape[1] != len(SHAPE_KEYS):
-            self.frames = None
-            logger.error("Frame data dimision is incorrect")
-            return
-        self.frames.to_csv(self.frame_filename, index=False)
+            filename = str(filename)
+            df = pd.read_csv(filename)
+            if df.shape[1] != len(SHAPE_KEYS):
+                logger.error("Frame data dimision is incorrect, filename {}".format(filename))
+                continue
 
-        self.ui.frameSlider.setEnabled(True)
-        self.ui.frameSlider.setMinimum(0)
-        self.ui.frameSlider.setMaximum(self.frames.shape[0]-1)
-        self.ui.frameSpinBox.setEnabled(True)
-        self.ui.frameSpinBox.setMinimum(0)
-        self.ui.frameSpinBox.setMaximum(self.frames.shape[0]-1)
+            frame_key = os.path.basename(filename)
+            self.frames[frame_key] = df
 
-        if not os.path.isfile(self.motor_value_filename):
-            names = [str(motor['name']) for motor in self.app.motors]
-            if not names:
-                logger.error("No motors loaded")
-                return
-            total_frames = self.frames.shape[0]
-            self.saved_motor_values_df = pd.DataFrame(
-                np.nan, index=np.arange(total_frames), columns=names)
-            self.saved_motor_values_df.to_csv(self.motor_value_filename, index=False)
-            logger.info("Motor target file {}".format(self.motor_value_filename))
-        else:
-            self.saved_motor_values_df = pd.read_csv(self.motor_value_filename)
-            logger.warn("Append to existing motor target file {}".format(
-                self.motor_value_filename))
+            if not os.path.isdir(TARGET_DIR):
+                os.makedirs(TARGET_DIR)
 
-        if self.frames.shape[0] > 0:
-            self.ui.frameSlider.setValue(0)
-            self.playPAU(self.ui.frameSlider.value())
+            target_filename = os.path.join(TARGET_DIR, frame_key)
+            if not os.path.isfile(target_filename):
+                names = [str(motor['name']) for motor in self.app.motors]
+                if not names:
+                    logger.error("No motors loaded")
+                    return
+                n_frames = df.shape[0]
+                target_df = pd.DataFrame(
+                    np.nan, index=np.arange(n_frames), columns=names)
+                target_df.to_csv(target_filename, index=False)
+                logger.info("Create motor target file {}".format(target_filename))
+            else:
+                target_df = pd.read_csv(target_filename)
+                logger.warn("Read existing motor target file {}".format(
+                    target_filename))
+            self.targets[frame_key] = target_df
+            self.ui.shapekeyComboBox.addItem(frame_key)
+
+        self.ui.shapekeyComboBox.setCurrentIndex(0)
+
+    def load_frame(self, index):
+            name = str(self.ui.shapekeyComboBox.itemText(index))
+            frame_df = self.frames.get(name)
+            if frame_df is not None and frame_df.shape[0] > 0:
+                self.ui.frameSlider.setEnabled(True)
+                self.ui.frameSlider.setMinimum(0)
+                self.ui.frameSlider.setMaximum(frame_df.shape[0]-1)
+                self.ui.frameSpinBox.setEnabled(True)
+                self.ui.frameSpinBox.setMinimum(0)
+                self.ui.frameSpinBox.setMaximum(frame_df.shape[0]-1)
+                self.ui.frameSlider.setValue(0)
+                self.playPAU(self.ui.frameSlider.value())
 
     def playPAU(self, frame):
-        if self.frames is not None and frame < self.frames.shape[0]:
-            m_coeffs = self.frames.loc[frame]
+        name = str(self.ui.shapekeyComboBox.currentText())
+        frame_df = self.frames.get(name)
+        if frame_df is not None and frame < frame_df.shape[0]:
+            m_coeffs = frame_df.iloc[frame]
 
             # Update table
             for row, (key, value) in enumerate(m_coeffs.iteritems()):
@@ -511,10 +527,11 @@ class MainWindow(QtGui.QMainWindow):
                 key_item = self.ui.savedMotorValueTableWidget.item(row, 0)
                 key_item.setText(motor_name)
                 try:
-                    target = self.saved_motor_values_df.loc[frame][motor_name]
+                    target = self.targets[name].iloc[frame][motor_name]
                     target = str(target)
                 except Exception as ex:
-                    logger.warn(ex)
+                    logger.warn("Can't get target, {}".format(ex))
+                    print self.targets
                     target = "nan"
                 value_item = self.ui.savedMotorValueTableWidget.item(row, 1)
                 value_item.setText(target)
@@ -557,12 +574,15 @@ class MainWindow(QtGui.QMainWindow):
                 logger.error("No motor configs")
 
     def saveMotorValues(self):
+        name = str(self.ui.shapekeyComboBox.currentText())
+        frame_df = self.frames.get(name)
         frame = self.ui.frameSlider.value()
-        total_frames = self.frames.shape[0]
-        if self.frames is not None and frame < total_frames:
+        if frame_df is not None and frame < frame_df.shape[0]:
             motor_positions = [motor.get('current_pos', np.nan) for motor in self.app.motors]
-            self.saved_motor_values_df.loc[frame] = motor_positions
-            self.saved_motor_values_df.to_csv(self.motor_value_filename, index=False)
+            target_df = self.targets[name]
+            target_filename = os.path.join(TARGET_DIR, name)
+            target_df.iloc[frame] = motor_positions
+            target_df.to_csv(target_filename, index=False)
 
             # Update Saved motor value
             for row, motor in enumerate(self.app.motors):
@@ -570,7 +590,7 @@ class MainWindow(QtGui.QMainWindow):
                 key_item = self.ui.savedMotorValueTableWidget.item(row, 0)
                 key_item.setText(motor_name)
                 try:
-                    target = self.saved_motor_values_df.loc[frame][motor_name]
+                    target = target_df.iloc[frame][motor_name]
                     target = str(target)
                 except Exception as ex:
                     logger.warn(ex)
@@ -579,7 +599,7 @@ class MainWindow(QtGui.QMainWindow):
                 value_item.setText(target)
 
     def trainModel(self):
-        if self.frames is not None:
+        if self.frames:
             self.training = True
             self.ui.trainButton.setEnabled(not self.training)
             thread = threading.Thread(target=self._trainModel)
@@ -590,8 +610,12 @@ class MainWindow(QtGui.QMainWindow):
 
     def _trainModel(self):
         pool = Pool(6)
+        keys = self.frames.keys()
+        targets = pd.concat([self.targets[name] for name in keys], ignore_index=True)
+        frames = pd.concat([self.frames[name] for name in keys], ignore_index=True)
+
         params = pool.map(
-            partial(trainMotor, targets=self.saved_motor_values_df, frames=self.frames),
+            partial(trainMotor, targets=targets, frames=frames),
             self.app.motors)
         pool.close()
         pool.join()
@@ -609,7 +633,7 @@ class MainWindow(QtGui.QMainWindow):
         self.plot()
 
     def plot(self):
-        if self.frames is not None:
+        if self.frames:
             if os.path.isdir(FIG_DIR):
                 shutil.rmtree(FIG_DIR)
             for motor in self.app.motors:
@@ -619,18 +643,21 @@ class MainWindow(QtGui.QMainWindow):
                 except KeyError as ex:
                     logger.warn("Motor {} has no model".format(motor['name']))
                     continue
-                plot_params(motor, self.frames[shapekeys], x,
-                    self.saved_motor_values_df[str(motor['name'])])
+                plot_params(motor, self.frames, shapekeys, x,
+                    self.targets)
         else:
             logger.error("No frame data")
 
     def clearMotorValues(self):
+        name = str(self.ui.shapekeyComboBox.currentText())
+        frame_df = self.frames.get(name)
         frame = self.ui.frameSlider.value()
-        total_frames = self.frames.shape[0]
-        if self.frames is not None and frame < total_frames:
+        if frame_df is not None and frame < frame_df.shape[0]:
             motor_positions = [np.nan for motor in self.app.motors]
-            self.saved_motor_values_df.loc[frame] = motor_positions
-            self.saved_motor_values_df.to_csv(self.motor_value_filename, index=False)
+            target_df = self.targets[name]
+            target_filename = os.path.join(TARGET_DIR, name)
+            target_df.iloc[frame] = motor_positions
+            target_df.to_csv(target_filename, index=False)
 
             # Update Saved motor value
             for row, motor in enumerate(self.app.motors):
@@ -638,7 +665,7 @@ class MainWindow(QtGui.QMainWindow):
                 key_item = self.ui.savedMotorValueTableWidget.item(row, 0)
                 key_item.setText(motor_name)
                 try:
-                    target = self.saved_motor_values_df.loc[frame][motor_name]
+                    target = target_df.iloc[frame][motor_name]
                     target = str(target)
                 except Exception as ex:
                     logger.warn(ex)
@@ -647,11 +674,15 @@ class MainWindow(QtGui.QMainWindow):
                 value_item.setText(target)
 
     def resetSavedMotorValues(self):
-        names = [str(motor['name']) for motor in self.app.motors]
-        total_frames = self.frames.shape[0]
-        self.saved_motor_values_df = pd.DataFrame(
-            np.nan, index=np.arange(total_frames), columns=names)
-        self.saved_motor_values_df.to_csv(self.motor_value_filename, index=False)
+        motor_names = [str(motor['name']) for motor in self.app.motors]
+        for name, frame_df in self.frames.items():
+            n_frames = frame_df.shape[0]
+            target_filename = os.path.join(TARGET_DIR, name)
+            target_df = pd.DataFrame(
+                np.nan, index=np.arange(n_frames), columns=motor_names)
+            target_df.to_csv(target_filename, index=False)
+            self.targets[name] = target_df
+
         for row in range(self.ui.savedMotorValueTableWidget.rowCount()):
             value_item = self.ui.savedMotorValueTableWidget.item(row, 1)
             value_item.setText('nan')
