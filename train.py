@@ -1,7 +1,3 @@
-import sys
-sys.path.insert(0, '/opt/hansonrobotics/py2env/lib/python2.7/dist-packages')
-sys.path.insert(0, '/opt/hansonrobotics/ros/lib/python2.7/dist-packages')
-
 from scipy.optimize import minimize
 import pandas as pd
 import numpy as np

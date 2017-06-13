@@ -1,8 +1,5 @@
 import logging
 from PyQt4 import QtGui
-import sys
-sys.path.insert(0, '/opt/hansonrobotics/py2env/lib/python2.7/dist-packages')
-sys.path.insert(0, '/opt/hansonrobotics/ros/lib/python2.7/dist-packages')
 
 from MainWindow import MainWindow
 
