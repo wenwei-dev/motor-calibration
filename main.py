@@ -8,7 +8,7 @@ logger = logging.getLogger(__name__)
 if __name__ == "__main__":
     import sys
 
-    fh = logging.FileHandler('motor_calibration.log')
+    fh = logging.FileHandler('motor_calibration.log', mode='w')
     fh.setLevel(logging.INFO)
     sh = logging.StreamHandler()
     sh.setLevel(logging.WARN)

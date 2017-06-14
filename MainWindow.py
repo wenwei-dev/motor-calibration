@@ -77,6 +77,14 @@ class MainWindow(QtGui.QMainWindow):
             target=self.readPAU, args=(self.blender_proc.stdout,))
         self.blender_thread.daemon = True
         self.blender_thread.start()
+        self.blender_frame_proc = subprocess.Popen(['python', 'blender_frame.py'],
+                stdout=subprocess.PIPE, stderr=subprocess.PIPE,
+                preexec_fn=os.setsid)
+        self.blender_frame_thread = threading.Thread(
+            target=self.readFrameInfo, args=(self.blender_frame_proc.stdout,))
+        self.blender_frame_thread.daemon = True
+        self.blender_frame_thread.start()
+
         self.ui.pauTableWidget.setRowCount(len(SHAPE_KEYS))
         self.ui.pauTableWidget.setColumnCount(2)
         self.ui.pauValueTableWidget.setRowCount(len(SHAPE_KEYS))
@@ -149,6 +157,7 @@ class MainWindow(QtGui.QMainWindow):
         self.ui.neutralButton.clicked.connect(self.neutralMotors)
         self.ui.loadFrameButton.clicked.connect(self.load_frame_dialog)
         self.ui.shapekeyComboBox.currentIndexChanged.connect(self.load_frame)
+        self.ui.linkBlenderButton.clicked.connect(self.link_blender)
 
     def close(self):
         super(MainWindow, self).close()
@@ -412,6 +421,23 @@ class MainWindow(QtGui.QMainWindow):
             widget = self.ui.motorValueTableWidget.cellWidget(row, 2)
             widget.ui.motorValueSlider.update()
 
+    def readFrameInfo(self, f):
+        for line in iter(f.readline, ''):
+            try:
+                name, frame = line.strip().split(',')
+                name = str(name)
+                frame = int(frame)
+                if self.ui.linkBlenderButton.isChecked():
+                    self.ui.shapekeyComboBox.clear()
+                    self.ui.shapekeyComboBox.addItem(name)
+                    self.playPAU(frame)
+                    self.ui.frameSlider.setMinimum(1)
+                    self.ui.frameSlider.setMaximum(101)
+                    self.ui.frameSlider.setValue(frame)
+                    self.ui.frameSlider.setEnabled(False)
+            except Exception as ex:
+                logger.error(ex)
+
     def readPAU(self, f):
         for line in iter(f.readline, ''):
             try:
@@ -467,6 +493,10 @@ class MainWindow(QtGui.QMainWindow):
 
     def closeEvent(self, event):
         os.killpg(self.blender_proc.pid, 2)
+        os.killpg(self.blender_frame_proc.pid, 2)
+
+    def link_blender(self):
+        pass
 
     def load_frames(self, filenames):
         self.frames = {}
@@ -691,6 +721,8 @@ class MainWindow(QtGui.QMainWindow):
         frame_df = self.frames.get(name)
         frame = self.ui.frameSlider.value()
         if frame_df is not None and frame < frame_df.shape[0]:
+            for motor in self.app.motors:
+                motor['current_target_pos'] = np.nan
             motor_positions = [np.nan for motor in self.app.motors]
             target_df = self.targets[name]
             target_filename = os.path.join(TARGET_DIR, name)

@@ -7,6 +7,7 @@ if __name__ == '__main__':
     from pau2motors.msg import pau
     def callback(msg):
         print msg.m_coeffs
+        sys.stdout.flush()
     rospy.init_node('read_shapekeys')
     rospy.Subscriber('/blender_api/get_pau', pau, callback)
     rospy.spin()

@@ -128,6 +128,16 @@
         <item>
          <layout class="QHBoxLayout" name="horizontalLayout">
           <item>
+           <widget class="QPushButton" name="linkBlenderButton">
+            <property name="text">
+             <string>Link Blender</string>
+            </property>
+            <property name="checkable">
+             <bool>true</bool>
+            </property>
+           </widget>
+          </item>
+          <item>
            <widget class="QPushButton" name="loadFrameButton">
             <property name="text">
              <string>Load Frames</string>

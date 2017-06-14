@@ -2,7 +2,7 @@
 
 # Form implementation generated from reading ui file 'ui/mainwindow.ui'
 #
-# Created: Wed Jun 14 16:36:25 2017
+# Created: Wed Jun 14 19:19:51 2017
 #      by: PyQt4 UI code generator 4.10.4
 #
 # WARNING! All changes made in this file will be lost!
@@ -89,6 +89,10 @@ class Ui_MainWindow(object):
         self.verticalLayout_8.setObjectName(_fromUtf8("verticalLayout_8"))
         self.horizontalLayout = QtGui.QHBoxLayout()
         self.horizontalLayout.setObjectName(_fromUtf8("horizontalLayout"))
+        self.linkBlenderButton = QtGui.QPushButton(self.tab_2)
+        self.linkBlenderButton.setCheckable(True)
+        self.linkBlenderButton.setObjectName(_fromUtf8("linkBlenderButton"))
+        self.horizontalLayout.addWidget(self.linkBlenderButton)
         self.loadFrameButton = QtGui.QPushButton(self.tab_2)
         self.loadFrameButton.setObjectName(_fromUtf8("loadFrameButton"))
         self.horizontalLayout.addWidget(self.loadFrameButton)
@@ -317,6 +321,7 @@ class Ui_MainWindow(object):
         self.enableConfigMotorsCheckBox.setText(_translate("MainWindow", "Enable Motors", None))
         self.motorConfigTableWidget.setSortingEnabled(True)
         self.playPAUWidget.setTabText(self.playPAUWidget.indexOf(self.tab), _translate("MainWindow", "Config", None))
+        self.linkBlenderButton.setText(_translate("MainWindow", "Link Blender", None))
         self.loadFrameButton.setText(_translate("MainWindow", "Load Frames", None))
         self.trainButton.setText(_translate("MainWindow", "Train", None))
         self.plotButton.setText(_translate("MainWindow", "Plot", None))
