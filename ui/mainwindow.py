@@ -2,7 +2,7 @@
 
 # Form implementation generated from reading ui file 'ui/mainwindow.ui'
 #
-# Created: Tue Jun 13 17:07:45 2017
+# Created: Wed Jun 14 16:36:25 2017
 #      by: PyQt4 UI code generator 4.10.4
 #
 # WARNING! All changes made in this file will be lost!
@@ -80,8 +80,6 @@ class Ui_MainWindow(object):
         self.motorConfigTableWidget.setObjectName(_fromUtf8("motorConfigTableWidget"))
         self.motorConfigTableWidget.setColumnCount(0)
         self.motorConfigTableWidget.setRowCount(0)
-        self.motorConfigTableWidget.horizontalHeader().setVisible(False)
-        self.motorConfigTableWidget.verticalHeader().setVisible(False)
         self.verticalLayout_2.addWidget(self.motorConfigTableWidget)
         self.verticalLayout_7.addWidget(self.frame)
         self.playPAUWidget.addTab(self.tab, _fromUtf8(""))

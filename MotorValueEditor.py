@@ -59,20 +59,20 @@ class MotorValueEditor(QtGui.QWidget):
     def sliderValueChanged(self, value):
         value = value/4.0
         if value > self.motor['max']:
-            logger.warn("Motor value is greater than maximum")
+            logger.warn("{} motor value {} is greater than maximum {}".format(self.motor['name'], value, self.motor['max']))
             return
         elif value < self.motor['min']:
-            logger.warn("Motor value is lower than minimum")
+            logger.warn("{} motor value {} is lower than minimum {}".format(self.motor['name'], value, self.motor['min']))
             return
         self.ui.motorValueDoubleSpinBox.setValue(value)
         self.setMotorTarget(value)
 
     def spinValueChanged(self, value):
         if value > self.motor['max']:
-            logger.warn("Motor value is greater than maximum")
+            logger.warn("{} motor value {} is greater than maximum {}".format(self.motor['name'], value, self.motor['max']))
             return
         elif value < self.motor['min']:
-            logger.warn("Motor value is lower than minimum")
+            logger.warn("{} motor value {} is lower than minimum {}".format(self.motor['name'], value, self.motor['min']))
             return
         self.ui.motorValueSlider.setValue(int(value*4))
 
@@ -97,10 +97,10 @@ class MotorValueEditor(QtGui.QWidget):
     def setMotorTarget(self, value):
         if self.ui.enableCheckBox.isChecked():
             if value > self.motor['max']:
-                logger.warn("Motor value is greater than maximum")
+                logger.warn("{} motor value {} is greater than maximum {}".format(self.motor['name'], value, self.motor['max']))
                 return
             elif value < self.motor['min']:
-                logger.warn("Motor value is lower than minimum")
+                logger.warn("{} motor value {} is lower than minimum {}".format(self.motor['name'], value, self.motor['min']))
                 return
             controller = self.get_controller()
             if controller is not None:

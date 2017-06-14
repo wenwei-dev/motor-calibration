@@ -312,7 +312,12 @@ class MainWindow(QtGui.QMainWindow):
         with open(filename) as f:
             motors = yaml.load(f)
             for motor in motors:
-                motor['device'] = motor.get('topic')
+                topic = motor.get('topic')
+                if not topic:
+                    if motor['hardware'] == 'dynamixel':
+                        motor['device'] = 'dynamixel'
+                else:
+                    motor['device'] = topic
                 saved_motor = {'saved_{}'.format(k): v for k, v in motor.items()}
                 motor.update(saved_motor)
             self.app.motors = motors
@@ -323,14 +328,17 @@ class MainWindow(QtGui.QMainWindow):
             for col in reversed(range(self.ui.motorMonitorTableWidget.columnCount())):
                 self.ui.motorMonitorTableWidget.removeColumn(col)
             self.ui.motorMonitorTableWidget.setRowCount(len(motors))
-            self.ui.motorMonitorTableWidget.setColumnCount(2)
-            self.ui.motorMonitorTableWidget.setHorizontalHeaderLabels('Motor Name,Target'.split(','))
+            self.ui.motorMonitorTableWidget.setColumnCount(3)
+            self.ui.motorMonitorTableWidget.setHorizontalHeaderLabels('Motor Name,Current,Target'.split(','))
             for row, motor in enumerate(self.app.motors):
                 key_item = QtGui.QTableWidgetItem(motor['name'])
                 self.ui.motorMonitorTableWidget.setItem(row, 0, key_item)
-                value_item = QtGui.QTableWidgetItem()
-                value_item.setData(QtCore.Qt.DisplayRole, -1)
-                self.ui.motorMonitorTableWidget.setItem(row, 1, value_item)
+                current_item = QtGui.QTableWidgetItem()
+                current_item.setData(QtCore.Qt.DisplayRole, -1)
+                self.ui.motorMonitorTableWidget.setItem(row, 1, current_item)
+                target_item = QtGui.QTableWidgetItem()
+                target_item.setData(QtCore.Qt.DisplayRole, -1)
+                self.ui.motorMonitorTableWidget.setItem(row, 2, target_item)
 
             self.motor_configs = Configs()
             self.motor_configs.parseMotors(motors)
@@ -433,8 +441,9 @@ class MainWindow(QtGui.QMainWindow):
                 controller = self.app.motor_controllers.get(device)
                 if controller is not None:
                     channel = controller.getChannelInfo(int(motor['motor_id']))
-                    motor['current_pos'] = channel.position
-                    motor['current_target_pos'] = channel.target_position
+                    if channel is not None:
+                        motor['current_pos'] = channel.position
+                        motor['current_target_pos'] = channel.target_position
             time.sleep(0.1)
 
     def showMotorValues(self):
@@ -442,13 +451,16 @@ class MainWindow(QtGui.QMainWindow):
             for motor in self.app.motors:
                 item = self.ui.motorMonitorTableWidget.findItems(
                     motor['name'], QtCore.Qt.MatchExactly)
-                position = motor.get('current_pos')
-                if position is not None and item is not None:
+                current = motor.get('current_pos')
+                target = motor.get('current_target_pos')
+                if current is not None and item is not None:
                     try:
                         motor_item = item[0]
                         row = motor_item.row()
-                        value_item = self.ui.motorMonitorTableWidget.item(row, 1)
-                        value_item.setData(QtCore.Qt.DisplayRole, position)
+                        current_item = self.ui.motorMonitorTableWidget.item(row, 1)
+                        current_item.setData(QtCore.Qt.DisplayRole, current)
+                        target_item = self.ui.motorMonitorTableWidget.item(row, 2)
+                        target_item.setData(QtCore.Qt.DisplayRole, target)
                     except Exception as ex:
                         logger.error("Updating motor current position error, {}".format(ex))
             time.sleep(0.1)
@@ -570,8 +582,8 @@ class MainWindow(QtGui.QMainWindow):
                             if hasattr(value, 'item'): # convert numpy float to python native float
                                 value = value.item()
                         except Exception as ex:
-                            logger.debug("Calculate mapper value for motor {}, error {}".format(motor['name'], ex))
-                            logger.debug(traceback.format_exc())
+                            logger.info("Calculate mapper value for motor {}, error {}".format(motor['name'], ex))
+                            logger.info(traceback.format_exc())
                             value = -1
                     else:
                         logger.debug("Can't create mapper for {}".format(motor['name']))

@@ -46,7 +46,7 @@ class MotorController(object):
             self.channels[i] = ChannelInfo(i)
         if len(ids) == 0:
             self.discover_job = threading.Thread(
-                target=self.discover_dynamixel_motors, args=(1, 50))
+                target=self.discover_dynamixel_motors, args=(0, 50))
             self.discover_job.daemon = True
             self.discover_job.start()
 
@@ -108,11 +108,12 @@ class MotorController(object):
                 else:
                     logger.warn("Can't set channel {} target {}".format(id, value/4))
             elif self.hardware == 'dynamixel':
-                self.controller.set_position(id, value)
+                try:
+                    self.controller.set_position(id, value)
+                except dynamixel_io.DroppedPacketError as ex:
+                    logger.info("Error in setting target for motor {}, {}".format(id, ex))
                 if id in self.channels:
                     self.channels[id].target_position = value
-        except dynamixel_io.DroppedPacketError as ex:
-            logger.warn("Error in setting target for motor {}, {}".format(id, ex))
         except Exception as ex:
             logger.error(traceback.format_exc())
 
@@ -137,6 +138,8 @@ class MotorController(object):
     def getChannelInfo(self, id):
         if id in self.channels:
             return self.channels[id]
+        else:
+            logger.info("No such channel {}, device {}, channels {}".format(id, self.device, self.channels.keys()))
 
     def getPosition(self, id):
         if id in self.channels:
@@ -154,6 +157,7 @@ class MotorController(object):
                     if response:
                         if i not in self.channels:
                             self.channels[i] = ChannelInfo(i)
+                            logger.info("Found motor id {}".format(i))
                         angle = self.controller.get_angle_limits(i)
                         mode = self.controller.get_drive_mode(i)
                         voltage = self.controller.get_voltage(i)

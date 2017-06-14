@@ -20,7 +20,7 @@ class BaseMapper(object):
         return pos
 
     def _saturated(self, angle):
-        return min(max(angle, self.motor_entry['min']), self.motor_entry['max'])
+        return np.minimum(np.maximum(angle, self.motor_entry['min']), self.motor_entry['max'])
 
 class DefaultMapper(BaseMapper):
 
@@ -35,7 +35,7 @@ class DefaultMapper(BaseMapper):
         angle = self.mapper.map(coeff)
         angle = self._saturated(angle)
         pos = self.angle2pulse(angle)
-        if np.isnan(pos):
+        if np.isnan(pos).any():
             logger.warn("Nan mapping value, key {}, coeff {}".format(keys, coeff.values))
         return pos
 
@@ -55,8 +55,9 @@ class TrainedMapper(BaseMapper):
         param_num = len(coeff)
         sum = x[:param_num]*coeff + x[-1]
         angle = sum.sum()
+        angle = self._saturated(angle)
         pos = self.angle2pulse(angle)
-        if np.isnan(pos):
+        if np.isnan(pos).any():
             logger.warn("Nan mapping value, x {}, coeff {}".format(x, coeff))
         return pos
 
