@@ -84,6 +84,7 @@ class MainWindow(QtGui.QMainWindow):
             target=self.readFrameInfo, args=(self.blender_frame_proc.stdout,))
         self.blender_frame_thread.daemon = True
         self.blender_frame_thread.start()
+        self.blender_pau = None
 
         self.ui.pauTableWidget.setRowCount(len(SHAPE_KEYS))
         self.ui.pauTableWidget.setColumnCount(2)
@@ -93,7 +94,7 @@ class MainWindow(QtGui.QMainWindow):
 
         self.training = False
         self.frames = {}
-        self.frames_df = None
+        self.current_frame = None
         self.frame_filename = os.path.join(DATA_DIR, 'shapekey-frames.csv')
         self.targets = {}
         self.model_df = create_model()
@@ -428,13 +429,31 @@ class MainWindow(QtGui.QMainWindow):
                 name = str(name)
                 frame = int(frame)
                 if self.ui.linkBlenderButton.isChecked():
-                    self.ui.shapekeyComboBox.clear()
-                    self.ui.shapekeyComboBox.addItem(name)
-                    self.playPAU(frame)
-                    self.ui.frameSlider.setMinimum(1)
-                    self.ui.frameSlider.setMaximum(101)
-                    self.ui.frameSlider.setValue(frame)
-                    self.ui.frameSlider.setEnabled(False)
+                    if self.ui.shapekeyComboBox.findText(name) == -1:
+                        self.ui.shapekeyComboBox.clear()
+                        self.ui.shapekeyComboBox.addItem(name)
+                        df = pd.DataFrame(np.nan, index=np.arange(102),
+                            columns=SHAPE_KEYS)
+                        self.frames = {name:df}
+                        names = [str(motor['name']) for motor in self.app.motors]
+                        target_df = pd.DataFrame(
+                            np.nan, index=np.arange(102), columns=names)
+                        self.targets[name] = target_df
+                        self.ui.frameSlider.setMinimum(0)
+                        self.ui.frameSlider.setMaximum(101)
+                        self.ui.frameSpinBox.setMinimum(0)
+                        self.ui.frameSpinBox.setMaximum(101)
+
+                    if self.blender_pau is not None:
+                        self.frames[name].iloc[frame] = self.blender_pau
+                        self.ui.frameSlider.setValue(frame)
+                        self.current_frame = frame
+                        if self.current_frame != frame:
+                            self.playPAU(self.current_frame)
+                            self.current_frame = frame
+                else:
+                    self.frames = {}
+                    self.targets = {}
             except Exception as ex:
                 logger.error(ex)
 
@@ -445,6 +464,7 @@ class MainWindow(QtGui.QMainWindow):
             except Exception as ex:
                 logger.warn("Read PAU error {}".format(ex))
                 continue
+            self.blender_pau = pd.Series(coeffs, SHAPE_KEYS)
             for row, (key, value) in enumerate(zip(SHAPE_KEYS, coeffs)):
                 key_item = self.ui.pauTableWidget.item(row, 0)
                 if key_item is None:
@@ -508,7 +528,7 @@ class MainWindow(QtGui.QMainWindow):
                 logger.error("Frame data dimision is incorrect, filename {}".format(filename))
                 continue
 
-            frame_key = os.path.basename(filename)
+            frame_key = os.path.splitext(os.path.basename(filename))[0]
             self.frames[frame_key] = df
 
             if not os.path.isdir(TARGET_DIR):

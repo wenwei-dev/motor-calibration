@@ -80,13 +80,15 @@ class MotorController(object):
                         except Exception as ex:
                             channel.valid = False
                             logger.error(traceback.format_exc())
-                        logger.debug('Device: {}, ID: {}, Position: {}'.format(
+                        logger.info('Device: {}, ID: {}, Position: {}'.format(
                             self.device, channel.id, channel.position))
                 elif self.hardware == 'dynamixel':
                     for channel in self.channels.values():
                         try:
                             channel.position = self.controller.get_position(channel.id)
                             channel.valid = True
+                        except dynamixel_io.ChecksumError:
+                            channel.valid = False
                         except IndexError:
                             channel.valid = False
                         except dynamixel_io.DroppedPacketError:
@@ -94,7 +96,7 @@ class MotorController(object):
                         except Exception as ex:
                             channel.valid = False
                             logger.error(traceback.format_exc())
-                        logger.debug('Device: {}, ID: {}, Position: {}'.format(
+                        logger.info('Device: {}, ID: {}, Position: {}'.format(
                             self.device, channel.id, channel.position))
             time.sleep(0.05)
 

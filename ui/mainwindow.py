@@ -2,7 +2,7 @@
 
 # Form implementation generated from reading ui file 'ui/mainwindow.ui'
 #
-# Created: Wed Jun 14 19:19:51 2017
+# Created: Thu Jun 15 18:06:26 2017
 #      by: PyQt4 UI code generator 4.10.4
 #
 # WARNING! All changes made in this file will be lost!
@@ -97,6 +97,7 @@ class Ui_MainWindow(object):
         self.loadFrameButton.setObjectName(_fromUtf8("loadFrameButton"))
         self.horizontalLayout.addWidget(self.loadFrameButton)
         self.shapekeyComboBox = QtGui.QComboBox(self.tab_2)
+        self.shapekeyComboBox.setSizeAdjustPolicy(QtGui.QComboBox.AdjustToContents)
         self.shapekeyComboBox.setObjectName(_fromUtf8("shapekeyComboBox"))
         self.horizontalLayout.addWidget(self.shapekeyComboBox)
         self.frameSlider = QtGui.QSlider(self.tab_2)

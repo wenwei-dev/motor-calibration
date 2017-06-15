@@ -145,7 +145,11 @@
            </widget>
           </item>
           <item>
-           <widget class="QComboBox" name="shapekeyComboBox"/>
+           <widget class="QComboBox" name="shapekeyComboBox">
+            <property name="sizeAdjustPolicy">
+             <enum>QComboBox::AdjustToContents</enum>
+            </property>
+           </widget>
           </item>
           <item>
            <widget class="QSlider" name="frameSlider">
