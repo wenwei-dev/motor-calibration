@@ -36,7 +36,7 @@ class DefaultMapper(BaseMapper):
         angle = self._saturated(angle)
         pos = self.angle2pulse(angle)
         if np.isnan(pos).any():
-            logger.warn("Nan mapping value, key {}, coeff {}".format(keys, coeff.values))
+            logger.warn("Nan mapping value, key {}, coeff {}, msg {}".format(keys, coeff.values, msg))
         return pos
 
 class TrainedMapper(BaseMapper):

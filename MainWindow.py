@@ -27,6 +27,8 @@ logger = logging.getLogger(__name__)
 CWD = os.path.abspath(os.path.dirname(__name__))
 DATA_DIR = os.path.join(CWD, 'data')
 TARGET_DIR = os.path.join(DATA_DIR, 'targets')
+if not os.path.isdir(TARGET_DIR):
+    os.makedirs(TARGET_DIR)
 
 class MainWindow(QtGui.QMainWindow):
     def __init__(self, parent=None):
@@ -123,8 +125,6 @@ class MainWindow(QtGui.QMainWindow):
         self.ui.saveMotorValuesButton.clicked.connect(self.saveMotorValues)
         self.ui.trainButton.clicked.connect(self.trainModel)
         self.ui.plotButton.clicked.connect(self.plot)
-
-        self.load_motor_settings(os.path.join(DATA_DIR, 'motors_settings.yaml'))
 
     def enableConfigMotors(self, state):
         self.configMotorCheckState = state
@@ -429,15 +429,35 @@ class MainWindow(QtGui.QMainWindow):
                 name = str(name)
                 frame = int(frame)
                 if self.ui.linkBlenderButton.isChecked():
+                    if frame < 0 or frame > 101:
+                        continue
                     if self.ui.shapekeyComboBox.findText(name) == -1:
                         self.ui.shapekeyComboBox.clear()
                         self.ui.shapekeyComboBox.addItem(name)
                         df = pd.DataFrame(np.nan, index=np.arange(102),
                             columns=SHAPE_KEYS)
                         self.frames = {name:df}
+
                         names = [str(motor['name']) for motor in self.app.motors]
                         target_df = pd.DataFrame(
                             np.nan, index=np.arange(102), columns=names)
+
+                        target_filename = os.path.join(TARGET_DIR, '{}.csv'.format(name))
+                        if not os.path.isfile(target_filename):
+                            names = [str(motor['name']) for motor in self.app.motors]
+                            if not names:
+                                logger.error("No motors loaded")
+                                continue
+
+                            n_frames = df.shape[0]
+                            target_df = pd.DataFrame(
+                                np.nan, index=np.arange(n_frames), columns=names)
+                            target_df.to_csv(target_filename, index=False)
+                            logger.info("Create motor target file {}".format(target_filename))
+                        else:
+                            target_df = pd.read_csv(target_filename)
+                            logger.warn("Read existing motor target file {}".format(
+                                target_filename))
                         self.targets[name] = target_df
                         self.ui.frameSlider.setMinimum(0)
                         self.ui.frameSlider.setMaximum(101)
@@ -534,7 +554,7 @@ class MainWindow(QtGui.QMainWindow):
             if not os.path.isdir(TARGET_DIR):
                 os.makedirs(TARGET_DIR)
 
-            target_filename = os.path.join(TARGET_DIR, frame_key)
+            target_filename = os.path.join(TARGET_DIR, '{}.csv'.format(frame_key))
             if not os.path.isfile(target_filename):
                 names = [str(motor['name']) for motor in self.app.motors]
                 if not names:
@@ -659,7 +679,7 @@ class MainWindow(QtGui.QMainWindow):
         if frame_df is not None and frame < frame_df.shape[0]:
             motor_positions = [motor.get('current_target_pos', np.nan) for motor in self.app.motors]
             target_df = self.targets[name]
-            target_filename = os.path.join(TARGET_DIR, name)
+            target_filename = os.path.join(TARGET_DIR, '{}.csv'.format(name))
             target_df.iloc[frame] = motor_positions
             target_df.to_csv(target_filename, index=False)
             logger.info("Update motor target file {}".format(target_filename))
@@ -726,6 +746,7 @@ class MainWindow(QtGui.QMainWindow):
             logger.error("No frame data")
 
     def _plot(self):
+        logger.info("Plotting")
         self.ui.plotButton.setEnabled(False)
         pool = Pool(6)
         results = pool.map(
@@ -745,7 +766,7 @@ class MainWindow(QtGui.QMainWindow):
                 motor['current_target_pos'] = np.nan
             motor_positions = [np.nan for motor in self.app.motors]
             target_df = self.targets[name]
-            target_filename = os.path.join(TARGET_DIR, name)
+            target_filename = os.path.join(TARGET_DIR, '{}.csv'.format(name))
             target_df.iloc[frame] = motor_positions
             target_df.to_csv(target_filename, index=False)
             logger.info("Update motor target file {}".format(target_filename))
@@ -768,7 +789,7 @@ class MainWindow(QtGui.QMainWindow):
         motor_names = [str(motor['name']) for motor in self.app.motors]
         for name, frame_df in self.frames.items():
             n_frames = frame_df.shape[0]
-            target_filename = os.path.join(TARGET_DIR, name)
+            target_filename = os.path.join(TARGET_DIR, '{}.csv'.format(name))
             target_df = pd.DataFrame(
                 np.nan, index=np.arange(n_frames), columns=motor_names)
             target_df.to_csv(target_filename, index=False)
