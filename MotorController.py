@@ -1,7 +1,3 @@
-import sys
-sys.path.insert(0, '/opt/hansonrobotics/py2env/lib/python2.7/dist-packages')
-sys.path.insert(0, '/opt/hansonrobotics/ros/lib/python2.7/dist-packages')
-
 from pololu.motors import Maestro
 from dynamixel_driver import dynamixel_io
 import threading
