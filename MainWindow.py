@@ -375,7 +375,11 @@ class MainWindow(QtGui.QMainWindow):
                 for k, v in motor.items():
                     if k.startswith('saved_'):
                         k2 = k.split('_',1)[1]
-                        saved_motor[k2] = motor[k]
+                        try:
+                            float(motor[k])
+                            saved_motor[k2] = motor[k]
+                        except:
+                            saved_motor[k2] = str(motor[k])
                 saved_motors.append(saved_motor)
             yaml.dump(saved_motors, f, default_flow_style=False)
             logger.info("Saved to {}".format(filename))
