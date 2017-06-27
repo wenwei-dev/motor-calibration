@@ -8,17 +8,19 @@ import bpy
 from collections import defaultdict
 import time
 import os
+import shutil
 
 frames = defaultdict(list)
-output_dir = os.path.expanduser('~/shapekey_data')
-if not os.path.isdir(output_dir):
-    os.makedirs(output_dir)
+output_dir = os.path.expanduser('/tmp/shapekey_data')
+if os.path.isdir(output_dir):
+    shutil.rmtree(output_dir)
+os.makedirs(output_dir)
 
 for action in bpy.data.actions:
     if not action.name.startswith('EMO-'):
         continue
     bpy.context.object.animation_data.action = action
-    name = action.name[4:]
+    name = action.name
 
     frame_size = bpy.context.scene.frame_end+1
     for i in range(frame_size):
